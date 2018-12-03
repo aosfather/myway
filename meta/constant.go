@@ -12,4 +12,5 @@ type Env struct {
 	ID          byte   //环境ID
 	Name        string //环境名称
 	Description string //环境描述
+	Domain      string //环境对应的域名，可选
 }

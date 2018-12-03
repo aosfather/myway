@@ -4,7 +4,7 @@ package meta
 type ServerCluster struct {
 	ID      string      //集群ID
 	Name    string      //集群名称
-	servers []*Server   //服务
+	Servers []*Server   //服务
 	Balance LoadBalance //负载策略
 	Heath   *HeathCheck //健康检查
 }

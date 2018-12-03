@@ -17,6 +17,10 @@ type Api struct {
 	MaxQPS         int64
 }
 
+func (this *Api) Key() string {
+	return this.NameSpace + "/" + this.Url
+}
+
 // 通用状态
 type Status byte
 
