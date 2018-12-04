@@ -32,13 +32,11 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 
 	url := string(ctx.Request.URI().RequestURI())
 	domain := string(ctx.Request.Header.Host())
-	fmt.Println(domain)
-	fmt.Println(url)
 	//通过dispatch，获取api的定义
 	api := this.dispatch.GetApi(domain, url)
 
 	if api == nil { //不存在的时候的处理
-		ctx.Response.SetBodyString("the url not found")
+		ctx.Response.SetBodyString("the url not found!")
 		return
 	}
 	//根据api定义内容，进行 auth、access、等等的处理
@@ -46,14 +44,17 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 
 	//根据分流和loadbalance选取server
 	server := this.loadBalance(api)
-	fmt.Println(server)
+	if server == nil {
+		ctx.Response.SetBodyString("the server not exist!")
+		return
+	}
+
 	//目标server调用
 	res := this.call(ctx.Request, server, api.ServerUrl)
 
 	//完成拦截器处理,处理服务器的返回值
 	this.afterCall(api, res)
 
-	fmt.Println(res)
 	//返回数据,回写response
 	this.copyResponse(res, &ctx.Response)
 
@@ -110,6 +111,7 @@ func (this *HttpProxy) loadBalance(api *meta.Api) *meta.Server {
 }
 
 func (this *HttpProxy) call(req fasthttp.Request, server *meta.Server, url string) *fasthttp.Response {
+	//需要进入重试处理
 
 	r := copyRequest(&req)
 	r.SetRequestURI("/" + url)
@@ -118,11 +120,13 @@ func (this *HttpProxy) call(req fasthttp.Request, server *meta.Server, url strin
 		fmt.Println(err.Error())
 		return nil
 	}
+	defer fasthttp.ReleaseRequest(r)
 	return res
 }
 
 func (this *HttpProxy) copyResponse(source *fasthttp.Response, target *fasthttp.Response) {
 	source.CopyTo(target)
+	defer fasthttp.ReleaseResponse(source)
 }
 
 func copyRequest(req *fasthttp.Request) *fasthttp.Request {

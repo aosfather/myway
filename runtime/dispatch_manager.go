@@ -13,6 +13,15 @@ func (this *DispatchManager) AddCluster(cluster *meta.ServerCluster) {
 
 }
 
+//获取集群
+func (this *DispatchManager) GetCluster(name string) *meta.ServerCluster {
+	if name != "" {
+		return this.clusterMap[name]
+	}
+
+	return nil
+}
+
 //删除集群
 func (this *DispatchManager) DelCluster(name string) {
 	delete(this.clusterMap, name)
@@ -49,10 +58,15 @@ func (this *DispatchManager) DelServer(clusterName string, id int64) {
 }
 
 //新增api
-func (this *DispatchManager) AddApi(domain, url string, api *meta.Api) {
-	if api == nil || url == "" {
+func (this *DispatchManager) AddApi(domain, clusterName string, api *meta.Api) {
+	if api == nil {
 		return
 	}
+
+	if api.Cluster == nil {
+		api.Cluster = this.GetCluster(clusterName)
+	}
+
 	this.apiMap[api.Key()] = api
 	var apiNode *node
 	if domain == "" {
@@ -74,7 +88,7 @@ func (this *DispatchManager) AddApi(domain, url string, api *meta.Api) {
 	}
 
 	if api != nil {
-		apiNode.addRoute(url, api.Key())
+		apiNode.addRoute(api.Url, api.Key())
 	}
 }
 

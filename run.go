@@ -23,7 +23,9 @@ func main() {
 	server.Port = 8990
 	cluster.Servers = append(cluster.Servers, &server)
 	api.Cluster = &cluster
-	dispatch.AddApi("", api.Url, &api)
+	dispatch.AddCluster(&cluster)
+	dispatch.AddApi("", "", &api)
+
 	proxy := runtime.HttpProxy{}
 	proxy.Init(dispatch)
 	proxy.Start()
