@@ -1,5 +1,7 @@
 package meta
 
+import "fmt"
+
 //虚拟服务器
 type ServerCluster struct {
 	ID      string      //集群ID
@@ -14,6 +16,10 @@ type Server struct {
 	Ip     string //ipname
 	Port   int    //端口
 	MaxQPS int64  `protobuf:"varint,4,opt,name=maxQPS" json:"maxQPS"`
+}
+
+func (this *Server) Addr() string {
+	return fmt.Sprintf("%s:%d", this.Ip, this.Port)
 }
 
 //健康监测
