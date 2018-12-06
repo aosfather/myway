@@ -72,3 +72,20 @@ func Hashcode(s string) int {
 	// v == MinInt
 	return 0
 }
+
+//根据标签进行处理
+type TagLoadBalance struct {
+	Tag     string      //tag
+	balance LoadBalance //使用的真实负载策略
+}
+
+func (this *TagLoadBalance) Select(req *fasthttp.RequestCtx, servers *list.List) int {
+	//获取有指定tag标签的服务器列表
+
+	//然后使用iphash方式，进行分配
+	l := servers.Len()
+	//取ip地址的hash
+	ip := GetRealClientIP(req)
+	hc := Hashcode(ip)
+	return int(hc % l)
+}

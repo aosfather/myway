@@ -37,7 +37,7 @@ type HTTPOption struct {
 // DefaultHTTPOption returns a HTTP Option
 func DefaultHTTPOption() *HTTPOption {
 	return &HTTPOption{
-		MaxConns:            8,
+		MaxConns:            80,
 		MaxConnDuration:     time.Minute,
 		MaxIdleConnDuration: time.Second * 30,
 		ReadBufferSize:      512,

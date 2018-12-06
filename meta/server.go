@@ -8,14 +8,14 @@ type ServerCluster struct {
 	Name    string      //集群名称
 	Servers []*Server   //服务
 	Balance LoadBalance //负载策略
-	Heath   *HeathCheck //健康检查
+	Heath   HeathCheck  //健康检查
 }
 
 type Server struct {
 	ID     int64  //服务器编号
 	Ip     string //ipname
 	Port   int    //端口
-	MaxQPS int64  `protobuf:"varint,4,opt,name=maxQPS" json:"maxQPS"`
+	MaxQPS int64  //支持的最大QPS
 }
 
 func (this *Server) Addr() string {

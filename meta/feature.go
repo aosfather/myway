@@ -17,11 +17,33 @@ const (
 type LoadBalance int32
 
 const (
-	RoundRobin LoadBalance = 0
-	IPHash     LoadBalance = 1
+	LBRoundRobin LoadBalance = 0
+	LBIPHash     LoadBalance = 1
+	LBTag        LoadBalance = 2
 )
 
-//熔断
+/**
+熔断器
+circuitBreaker.errorThresholdPercentage
+失败率达到多少百分比后熔断
+默认值：50
+主要根据依赖重要性进行调整
+
+circuitBreaker.forceClosed
+是否强制关闭熔断
+如果是强依赖，应该设置为true
+
+circuitBreaker.requestVolumeThreshold
+熔断触发的最小个数/10s
+默认值：20
+
+circuitBreaker.sleepWindowInMilliseconds
+熔断多少秒后去尝试请求
+默认值：5000
+
+hystrix.command.default.metrics.healthSnapshot.intervalInMilliseconds
+记录health 快照（用来统计成功和错误绿）的间隔，默认500ms
+*/
 type CircuitBreaker struct {
 	CloseTimeout       int64 `protobuf:"varint,1,opt,name=closeTimeout" json:"closeTimeout"`
 	HalfTrafficRate    int32 `protobuf:"varint,2,opt,name=halfTrafficRate" json:"halfTrafficRate"`
