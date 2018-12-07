@@ -131,7 +131,6 @@ func (this *HttpProxy) loadBalance(api *meta.Api, ctx *fasthttp.RequestCtx) *met
 
 func (this *HttpProxy) call(req fasthttp.Request, server *meta.Server, url string) *fasthttp.Response {
 	//需要进入重试处理
-
 	r := copyRequest(&req)
 	r.SetRequestURI("/" + url)
 	res, err := this.client.Do(r, server.Addr(), nil)
