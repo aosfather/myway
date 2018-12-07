@@ -21,6 +21,8 @@ type HttpProxy struct {
 func (this *HttpProxy) Init(dispatch *DispatchManager) {
 	this.dispatch = dispatch
 	this.client = NewFastHTTPClientOption(DefaultHTTPOption())
+	this.intercepters = append(this.intercepters, &AccessLogIntercepter{})
+	this.intercepters = append(this.intercepters, &LimitIntercepter{})
 }
 
 func (this *HttpProxy) Start() {
@@ -32,7 +34,6 @@ func (this *HttpProxy) Start() {
 
 func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	//获取访问的url
-
 	url := string(ctx.Request.URI().RequestURI())
 	domain := string(ctx.Request.Header.Host())
 	//通过dispatch，获取api的定义
@@ -43,20 +44,21 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	//根据api定义内容，进行 auth、access、等等的处理
-	this.beforeCall(api, ctx)
+	var res *fasthttp.Response
+	if this.beforeCall(api, ctx) {
+		//根据分流和loadbalance选取server
+		server := this.loadBalance(api, ctx)
+		if server == nil {
+			ctx.Response.SetBodyString("the server not exist!")
+			return
+		}
 
-	//根据分流和loadbalance选取server
-	server := this.loadBalance(api, ctx)
-	if server == nil {
-		ctx.Response.SetBodyString("the server not exist!")
-		return
+		//目标server调用
+		res = this.call(ctx.Request, server, api.ServerUrl)
 	}
 
-	//目标server调用
-	res := this.call(ctx.Request, server, api.ServerUrl)
-
 	//完成拦截器处理,处理服务器的返回值
-	this.afterCall(api, res)
+	this.afterCall(api, ctx.ID(), res)
 
 	//返回数据,回写response
 	this.copyResponse(res, &ctx.Response)
@@ -78,9 +80,9 @@ func (this *HttpProxy) beforeCall(api *meta.Api, ctx *fasthttp.RequestCtx) bool 
 	return true
 }
 
-func (this *HttpProxy) afterCall(api *meta.Api, res *fasthttp.Response) {
+func (this *HttpProxy) afterCall(api *meta.Api, id uint64, res *fasthttp.Response) {
 	for _, intercepter := range this.intercepters {
-		ok, err := intercepter.After(api, res)
+		ok, err := intercepter.After(api, id, res)
 		if !ok {
 			err.Error()
 			//TODO 错误处理
@@ -105,22 +107,22 @@ func (this *HttpProxy) loadBalance(api *meta.Api, ctx *fasthttp.RequestCtx) *met
 
 	if api != nil {
 		context := GetRuntimeContext(api)
-		if context.QPS.Incr() {
-			log.Println(context)
-			if context.Lb != nil {
-				log.Print(context.Lb)
-				return context.Lb.Select(ctx, &api.Cluster.Servers)
-			}
-			//没有负载均衡设置，走random
-			lservers := len(api.Cluster.Servers)
-			if lservers > 1 {
-				rand.Seed(time.Now().UnixNano())
-				index := rand.Intn(lservers)
-				return api.Cluster.Servers[index]
-			} else if lservers > 0 {
-				return api.Cluster.Servers[0]
-			}
+		//if context.QPS.Incr() {
+		log.Println(context)
+		if context.Lb != nil {
+			log.Print(context.Lb)
+			return context.Lb.Select(ctx, &api.Cluster.Servers)
 		}
+		//没有负载均衡设置，走random
+		lservers := len(api.Cluster.Servers)
+		if lservers > 1 {
+			rand.Seed(time.Now().UnixNano())
+			index := rand.Intn(lservers)
+			return api.Cluster.Servers[index]
+		} else if lservers > 0 {
+			return api.Cluster.Servers[0]
+		}
+		//}
 
 	}
 
@@ -142,8 +144,11 @@ func (this *HttpProxy) call(req fasthttp.Request, server *meta.Server, url strin
 }
 
 func (this *HttpProxy) copyResponse(source *fasthttp.Response, target *fasthttp.Response) {
-	source.CopyTo(target)
-	defer fasthttp.ReleaseResponse(source)
+	if source != nil {
+		source.CopyTo(target)
+		defer fasthttp.ReleaseResponse(source)
+	}
+
 }
 
 func copyRequest(req *fasthttp.Request) *fasthttp.Request {
