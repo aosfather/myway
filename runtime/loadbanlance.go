@@ -112,7 +112,7 @@ func buildBalance(b meta.LoadBalance) LoadBalance {
 	case meta.LBIPHash:
 		return new(IPHash)
 	case meta.LBRoundRobin:
-		return new(RoundRobin)
+		return NewRoundRobin()
 	case meta.LBTag:
 		return new(TagLoadBalance)
 	default:

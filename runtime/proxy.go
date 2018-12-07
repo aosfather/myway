@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/aosfather/myway/meta"
 	"github.com/valyala/fasthttp"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -105,7 +106,9 @@ func (this *HttpProxy) loadBalance(api *meta.Api, ctx *fasthttp.RequestCtx) *met
 	if api != nil {
 		context := GetRuntimeContext(api)
 		if context.QPS.Incr() {
+			log.Println(context)
 			if context.Lb != nil {
+				log.Print(context.Lb)
 				return context.Lb.Select(ctx, &api.Cluster.Servers)
 			}
 			//没有负载均衡设置，走random

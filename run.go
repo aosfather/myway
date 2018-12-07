@@ -15,11 +15,14 @@ func main() {
 	api.NameSpace = "m"
 	api.Url = "/a"
 	api.MaxQPS = 2
+
 	cluster := meta.ServerCluster{}
 	cluster.ID = "test"
 	cluster.Name = "测试集群"
+	cluster.Balance = 2
 	server := meta.Server{}
 	server.ID = 100
+	server.Tag.Init("")
 	server.Ip = "127.0.0.1"
 	server.Port = 8990
 	cluster.Servers = append(cluster.Servers, &server)
