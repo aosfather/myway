@@ -14,6 +14,7 @@ func main() {
 	api.ServerUrl = "meta/query"
 	api.NameSpace = "m"
 	api.Url = "/a"
+	api.MaxQPS = 2
 	cluster := meta.ServerCluster{}
 	cluster.ID = "test"
 	cluster.Name = "测试集群"

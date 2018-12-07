@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"container/list"
+	"github.com/aosfather/myway/meta"
 	"github.com/valyala/fasthttp"
 	"hash/crc32"
 	"strings"
@@ -12,7 +12,7 @@ import (
   负载均衡器
 */
 type LoadBalance interface {
-	Select(req *fasthttp.RequestCtx, servers *list.List) int
+	Select(req *fasthttp.RequestCtx, servers *[]*meta.Server) *meta.Server
 }
 
 /**
@@ -30,12 +30,13 @@ func NewRoundRobin() LoadBalance {
 }
 
 // Select select a server from servers using RoundRobin
-func (rr RoundRobin) Select(req *fasthttp.RequestCtx, servers *list.List) int {
-	l := uint64(servers.Len())
+func (rr RoundRobin) Select(req *fasthttp.RequestCtx, servers *[]*meta.Server) *meta.Server {
+	l := uint64(len(*servers))
 	if 0 >= l {
-		return -1
+		return nil
 	}
-	return int(atomic.AddUint64(rr.ops, 1) % l)
+	index := int(atomic.AddUint64(rr.ops, 1) % l)
+	return (*servers)[index]
 }
 
 /**
@@ -44,12 +45,13 @@ func (rr RoundRobin) Select(req *fasthttp.RequestCtx, servers *list.List) int {
 type IPHash struct {
 }
 
-func (rr IPHash) Select(req *fasthttp.RequestCtx, servers *list.List) int {
-	l := servers.Len()
+func (rr IPHash) Select(req *fasthttp.RequestCtx, servers *[]*meta.Server) *meta.Server {
+	l := len(*servers)
 	//取ip地址的hash
 	ip := GetRealClientIP(req)
 	hc := Hashcode(ip)
-	return int(hc % l)
+	index := int(hc % l)
+	return (*servers)[index]
 }
 
 func GetRealClientIP(ctx *fasthttp.RequestCtx) string {
@@ -77,15 +79,44 @@ func Hashcode(s string) int {
 type TagLoadBalance struct {
 	Tag     string      //tag
 	balance LoadBalance //使用的真实负载策略
+
 }
 
-func (this *TagLoadBalance) Select(req *fasthttp.RequestCtx, servers *list.List) int {
+func (this *TagLoadBalance) Select(req *fasthttp.RequestCtx, servers *[]*meta.Server) *meta.Server {
+	var tagServers []*meta.Server
 	//获取有指定tag标签的服务器列表
+	for _, v := range *servers {
+		if v.Tag.Has(this.Tag) {
+			tagServers = append(tagServers, v)
+		}
+
+	}
 
 	//然后使用iphash方式，进行分配
-	l := servers.Len()
+	l := len(tagServers)
+	if l == 0 {
+		return nil
+	}
+
 	//取ip地址的hash
 	ip := GetRealClientIP(req)
 	hc := Hashcode(ip)
-	return int(hc % l)
+	index := int(hc % l)
+
+	return tagServers[index]
+}
+
+//工厂方法，构建负载均衡器
+func buildBalance(b meta.LoadBalance) LoadBalance {
+	switch b {
+	case meta.LBIPHash:
+		return new(IPHash)
+	case meta.LBRoundRobin:
+		return new(RoundRobin)
+	case meta.LBTag:
+		return new(TagLoadBalance)
+	default:
+		return new(IPHash)
+
+	}
 }

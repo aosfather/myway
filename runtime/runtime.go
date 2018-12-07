@@ -1,6 +1,8 @@
 package runtime
 
 import (
+	"github.com/aosfather/myway/meta"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -18,6 +20,31 @@ const (
 
 )
 
+var (
+	runtimeMaps map[string]*runtimeContext = make(map[string]*runtimeContext)
+	lock        sync.Mutex
+)
+
+func GetRuntimeContext(api *meta.Api) *runtimeContext {
+	run := runtimeMaps[api.Key()]
+
+	if run == nil {
+		lock.Lock()
+		run = new(runtimeContext)
+		run.Owner = api
+		run.ID = api.Key()
+		run.Init()
+		defer lock.Unlock()
+		if runtimeMaps[api.Key()] == nil {
+			runtimeMaps[api.Key()] = run
+		}
+		run = runtimeMaps[api.Key()]
+
+	}
+
+	return run
+}
+
 //运行时上下文
 type runtimeContext struct {
 	ID     string       //
@@ -26,6 +53,15 @@ type runtimeContext struct {
 	Status CiruitStatus //熔断状态
 	Lb     LoadBalance  //负载均衡器
 
+}
+
+func (this *runtimeContext) InitByApi(api *meta.Api) {
+	this.Init()
+	this.QPS.Max = api.MaxQPS
+	this.ID = api.Key()
+	this.Owner = api
+	this.Status = CS_CLOSE
+	this.Lb = buildBalance(api.Cluster.Balance)
 }
 
 func (this *runtimeContext) Init() {

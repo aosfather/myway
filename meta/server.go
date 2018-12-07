@@ -1,6 +1,9 @@
 package meta
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 //虚拟服务器
 type ServerCluster struct {
@@ -16,6 +19,7 @@ type Server struct {
 	Ip     string //ipname
 	Port   int    //端口
 	MaxQPS int64  //支持的最大QPS
+	Tag    Tags
 }
 
 func (this *Server) Addr() string {
@@ -36,4 +40,22 @@ type RetryStrategy struct {
 	Interval int32   `protobuf:"varint,1,opt,name=interval" json:"interval"`
 	MaxTimes int32   `protobuf:"varint,2,opt,name=maxTimes" json:"maxTimes"`
 	Codes    []int32 `protobuf:"varint,3,rep,name=codes" json:"codes,omitempty"`
+}
+
+type Tags struct {
+	tags []string
+}
+
+func (this *Tags) Init(str string) {
+	this.tags = strings.Split(str, ",")
+}
+
+func (this *Tags) Has(tag string) bool {
+	for _, v := range this.tags {
+		if v == tag {
+			return true
+		}
+	}
+
+	return false
 }

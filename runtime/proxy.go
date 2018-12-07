@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/aosfather/myway/meta"
 	"github.com/valyala/fasthttp"
+	"math/rand"
+	"time"
 )
 
 //基本的代理
@@ -43,7 +45,7 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	this.beforeCall(api, ctx)
 
 	//根据分流和loadbalance选取server
-	server := this.loadBalance(api)
+	server := this.loadBalance(api, ctx)
 	if server == nil {
 		ctx.Response.SetBodyString("the server not exist!")
 		return
@@ -97,12 +99,24 @@ func (this *HttpProxy) releaseCall(api *meta.Api, ctx *fasthttp.RequestCtx) {
 	}
 }
 
-//根据
-func (this *HttpProxy) loadBalance(api *meta.Api) *meta.Server {
+//负载均衡
+func (this *HttpProxy) loadBalance(api *meta.Api, ctx *fasthttp.RequestCtx) *meta.Server {
 
 	if api != nil {
-		if len(api.Cluster.Servers) > 0 {
-			return api.Cluster.Servers[0]
+		context := GetRuntimeContext(api)
+		if context.QPS.Incr() {
+			if context.Lb != nil {
+				return context.Lb.Select(ctx, &api.Cluster.Servers)
+			}
+			//没有负载均衡设置，走random
+			lservers := len(api.Cluster.Servers)
+			if lservers > 1 {
+				rand.Seed(time.Now().UnixNano())
+				index := rand.Intn(lservers)
+				return api.Cluster.Servers[index]
+			} else if lservers > 0 {
+				return api.Cluster.Servers[0]
+			}
 		}
 
 	}
