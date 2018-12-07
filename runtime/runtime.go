@@ -35,6 +35,7 @@ func GetRuntimeContext(api *meta.Api) *runtimeContext {
 		run.ID = api.Key()
 		run.Init()
 		run.Lb = buildBalance(api.Cluster.Balance)
+		run.Lb.Config(api.Cluster.BalanceConfig)
 		defer lock.Unlock()
 		if runtimeMaps[api.Key()] == nil {
 			runtimeMaps[api.Key()] = run

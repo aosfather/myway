@@ -12,19 +12,28 @@ import (
   负载均衡器
 */
 type LoadBalance interface {
+	Config(p string)
 	Select(req *fasthttp.RequestCtx, servers *[]*meta.Server) *meta.Server
+}
+
+type abstractLoadBalance struct {
+}
+
+func (this *abstractLoadBalance) Config(p string) {
+
 }
 
 /**
   随机均衡负载器
 */
 type RoundRobin struct {
+	abstractLoadBalance
 	ops *uint64
 }
 
 func NewRoundRobin() LoadBalance {
 	var ops uint64 = 0
-	return RoundRobin{
+	return &RoundRobin{
 		ops: &ops,
 	}
 }
@@ -43,6 +52,7 @@ func (rr RoundRobin) Select(req *fasthttp.RequestCtx, servers *[]*meta.Server) *
   ip hash loadbalance
 */
 type IPHash struct {
+	abstractLoadBalance
 }
 
 func (rr IPHash) Select(req *fasthttp.RequestCtx, servers *[]*meta.Server) *meta.Server {
@@ -82,6 +92,10 @@ type TagLoadBalance struct {
 
 }
 
+func (this *TagLoadBalance) Config(p string) {
+	this.Tag = p
+	this.balance = buildBalance(0)
+}
 func (this *TagLoadBalance) Select(req *fasthttp.RequestCtx, servers *[]*meta.Server) *meta.Server {
 	var tagServers []*meta.Server
 	//获取有指定tag标签的服务器列表
