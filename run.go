@@ -1,11 +1,19 @@
 package main
 
 import (
+	"github.com/aosfather/myway/console"
 	"github.com/aosfather/myway/meta"
 	"github.com/aosfather/myway/runtime"
 )
 
 func main() {
+
+	//启动控制端
+	admin := console.ConsoleDispatch{}
+	admin.Init(8980)
+	go admin.Start()
+
+	//启动服务
 	dispatch := &runtime.DispatchManager{}
 	dispatch.Init()
 
@@ -34,4 +42,5 @@ func main() {
 	proxy := runtime.HttpProxy{}
 	proxy.Init(dispatch)
 	proxy.Start()
+
 }
