@@ -43,3 +43,8 @@
 ### version 1.0.0
 * 支持spring cloud的注册中心服务发现
 * 支持熔断
+
+### version 1.1.0
+* 支持自动生成trace id对系统无侵入
+* 支持lua脚本，可以自定义路由规则
+
