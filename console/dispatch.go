@@ -46,4 +46,12 @@ func (this *ConsoleDispatch) ServeHTTP(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
+	//检查访问token
+
+	//执行对应请求处理
+
+}
+
+//处理的hanler
+type ConsoleHandler interface {
 }
