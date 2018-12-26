@@ -36,4 +36,5 @@ func (this *RegisterHandle) addServer(request *ConsoleRequest) ConsoleResponse {
 //批量注册api
 func (this *RegisterHandle) addApi(request *ConsoleRequest) ConsoleResponse {
 
+	return ConsoleResponse{}
 }
