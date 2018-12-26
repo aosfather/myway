@@ -1,6 +1,7 @@
 package console
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/aosfather/myway/runtime"
 	"github.com/valyala/fasthttp"
@@ -52,6 +53,18 @@ func (this *ConsoleDispatch) ServeHTTP(ctx *fasthttp.RequestCtx) {
 
 }
 
-//处理的hanler
-type ConsoleHandler interface {
+//控制请求
+type ConsoleRequest struct {
+	Token string          `json:"access_token"`
+	Data  json.RawMessage `json:"data"`
 }
+
+//控制结果
+type ConsoleResponse struct {
+	Status byte   `json:"status"`
+	Code   string `json:"code"`
+	Msg    string `json:"message"`
+}
+
+//处理的hanler
+type ConsoleHandler func(request *ConsoleRequest) ConsoleResponse
