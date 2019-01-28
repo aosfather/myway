@@ -16,6 +16,8 @@ func main() {
 	//启动服务
 	dispatch := &runtime.DispatchManager{}
 	dispatch.Init()
+	handle := console.RegisterHandle{}
+	handle.Init(&admin, dispatch)
 
 	//添加测试的api url，server
 	api := meta.Api{}

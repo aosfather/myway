@@ -26,6 +26,14 @@ func (this *ConsoleDispatch) Init(p int) {
 	this.dispatch.Init()
 
 }
+
+func (this *ConsoleDispatch) RegisterHandle(url string, h ConsoleHandler) {
+	if url != "" && h != nil {
+		this.dispatch.AddUrl(url, h)
+	}
+
+}
+
 func (this *ConsoleDispatch) Start() {
 	this.server = &fasthttp.Server{Handler: this.ServeHTTP}
 	if this.port == 0 {
@@ -50,6 +58,10 @@ func (this *ConsoleDispatch) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	//检查访问token
 
 	//执行对应请求处理
+	h := api.(ConsoleHandler)
+	response := h(nil)
+
+	ctx.WriteString(fmt.Sprintf("%d,%s,%s", response.Status, response.Code, response.Msg))
 
 }
 
