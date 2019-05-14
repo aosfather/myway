@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aosfather/myway/console"
 	"github.com/aosfather/myway/meta"
 	"github.com/aosfather/myway/runtime"
 )
 
 func main() {
+	e := yamlConfig{}
+	e.Load("config.yaml")
+	fmt.Println(e)
 
 	//启动控制端
 	admin := console.ConsoleDispatch{}
@@ -46,3 +50,9 @@ func main() {
 	proxy.Start()
 
 }
+
+/*
+ TODO 系统加载次序
+  1、读取配置文件
+  2、根据指定的目录，加载api的定义
+*/
