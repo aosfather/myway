@@ -29,13 +29,13 @@
   
 ## RoadMap
 ### version 0.5.0
-* 具有访问日志 
+* 具有访问日志 --走新的日志（
 * 支持iphash 负载策略 --ok
 * 支持基于tag切换的负载策略 --ok
 * 支持access的黑白名单 --ok
 
 ### version 0.6.0
-* 支持从配置文件中注册api、server接口
+* 支持从配置文件中注册api、server接口 --doing
 * 支持静态资源
 
 
