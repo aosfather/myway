@@ -47,4 +47,6 @@ type AccessLogger interface {
 	ToAccess(content *AccessContent)
 	//服务访问错误信息记录
 	ToError(e *ErrorContent)
+
+	WriteTextToAccess(text string)
 }

@@ -17,8 +17,9 @@ type yamlConfig struct {
 	Config ApplicationConfigurate `yaml:"path"`
 }
 type ApplicationConfigurate struct {
-	ServerPath string `yaml:"server"`
-	ApiPath    string `yaml:"api"`
+	ServerPath    string `yaml:"server"`
+	ApiPath       string `yaml:"api"`
+	AccessLogFile string `yaml:"access_log"`
 }
 
 //从文件装载信息

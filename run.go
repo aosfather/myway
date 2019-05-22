@@ -11,6 +11,10 @@ func main() {
 	e := yamlConfig{}
 	e.Load("config.yaml")
 	fmt.Println(e)
+	logfactory := logrusFactory{}
+	logfactory.Init(e.Config)
+	runtime.SetAccessLogger(logfactory.GetAccessLogger())
+	runtime.Log("test 001")
 
 	//启动控制端
 	admin := console.ConsoleDispatch{}
