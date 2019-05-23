@@ -1,6 +1,6 @@
 id: test
-name:  测试集群
+name: "test"
 balance: 2
-balance_config: test
+balance_config: "test"
 servers:
-  - {id: 100 ,ip: 127.0.0.1,port: 8990,tag: test,dev}
+  - {id: 100 ,ip: "127.0.0.1",port: 8990,tag: "test,dev"}

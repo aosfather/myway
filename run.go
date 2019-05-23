@@ -30,14 +30,14 @@ func main() {
 
 	////添加测试的api url，server
 	//api := meta.Api{}
-	//api.ServerUrl = "meta/query"
+	//api.ServerUrl = "bb"
 	//api.NameSpace = "m"
-	//api.Url = "/a"
+	//api.Url = "/my/a"
 	//api.MaxQPS = 2
 	//
 	//cluster := meta.ServerCluster{}
-	//cluster.ID = "test"
-	//cluster.Name = "测试集群"
+	//cluster.ID = "test1"
+	//cluster.Name = "test1"
 	//cluster.Balance = 2
 	//cluster.BalanceConfig = "test"
 	//server := meta.Server{}

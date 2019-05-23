@@ -97,7 +97,7 @@ func (this *apiDefine) toApi(fix string) *meta.Api {
 	api := meta.Api{}
 	api.ServerUrl = this.ServerUrl
 	api.NameSpace = this.Namespace
-	api.Url = "/" + fix + this.Url
+	api.Url = "/" + fix + "/" + this.Url
 	api.MaxQPS = this.MaxQPS
 	return &api
 }
@@ -142,6 +142,8 @@ func LoadAPIFromFile(path string, dispatch *runtime.DispatchManager) bool {
 		for _, apidefine := range apis.Apis {
 			api := apidefine.toApi(apis.Namespace)
 			api.Cluster = dispatch.GetCluster(apidefine.Cluster)
+			fmt.Println(api)
+			fmt.Println(api.Cluster)
 			dispatch.AddApi("", "", api)
 		}
 
