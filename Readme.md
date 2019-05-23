@@ -35,7 +35,7 @@
 * 支持access的黑白名单 --ok
 
 ### version 0.6.0
-* 支持从配置文件中注册api、server接口 --doing
+* 支持从配置文件中注册api、server接口 --ok
 * 支持静态资源
 
 
