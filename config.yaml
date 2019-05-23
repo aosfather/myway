@@ -1,3 +1,5 @@
 path:
-  server: aaa
-  api: bb
+  server: config/clusters
+  api: config/apis
+  access_log:
+  log:

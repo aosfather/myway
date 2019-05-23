@@ -20,6 +20,7 @@ type ApplicationConfigurate struct {
 	ServerPath    string `yaml:"server"`
 	ApiPath       string `yaml:"api"`
 	AccessLogFile string `yaml:"access_log"`
+	logFile       string `yaml:"log"`
 }
 
 //从文件装载信息

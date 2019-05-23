@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/aosfather/myway/console"
-	"github.com/aosfather/myway/meta"
 	"github.com/aosfather/myway/runtime"
 )
 
@@ -11,6 +10,8 @@ func main() {
 	e := yamlConfig{}
 	e.Load("config.yaml")
 	fmt.Println(e)
+
+	//初始化日志组件
 	logfactory := logrusFactory{}
 	logfactory.Init(e.Config)
 	runtime.SetAccessLogger(logfactory.GetAccessLogger())
@@ -27,27 +28,32 @@ func main() {
 	handle := console.RegisterHandle{}
 	handle.Init(&admin, dispatch)
 
-	//添加测试的api url，server
-	api := meta.Api{}
-	api.ServerUrl = "meta/query"
-	api.NameSpace = "m"
-	api.Url = "/a"
-	api.MaxQPS = 2
+	////添加测试的api url，server
+	//api := meta.Api{}
+	//api.ServerUrl = "meta/query"
+	//api.NameSpace = "m"
+	//api.Url = "/a"
+	//api.MaxQPS = 2
+	//
+	//cluster := meta.ServerCluster{}
+	//cluster.ID = "test"
+	//cluster.Name = "测试集群"
+	//cluster.Balance = 2
+	//cluster.BalanceConfig = "test"
+	//server := meta.Server{}
+	//server.ID = 100
+	//server.Tag.Init("test,dev")
+	//server.Ip = "127.0.0.1"
+	//server.Port = 8990
+	//cluster.Servers = append(cluster.Servers, &server)
+	//api.Cluster = &cluster
+	//dispatch.AddCluster(&cluster)
+	//dispatch.AddApi("", "", &api)
 
-	cluster := meta.ServerCluster{}
-	cluster.ID = "test"
-	cluster.Name = "测试集群"
-	cluster.Balance = 2
-	cluster.BalanceConfig = "test"
-	server := meta.Server{}
-	server.ID = 100
-	server.Tag.Init("test,dev")
-	server.Ip = "127.0.0.1"
-	server.Port = 8990
-	cluster.Servers = append(cluster.Servers, &server)
-	api.Cluster = &cluster
-	dispatch.AddCluster(&cluster)
-	dispatch.AddApi("", "", &api)
+	//从配置中加载cluster的定义
+	LoadClusterFromFile(e.Config.ServerPath, dispatch)
+	//从api的定义中加载代理的api
+	LoadAPIFromFile(e.Config.ApiPath, dispatch)
 
 	proxy := runtime.HttpProxy{}
 	proxy.Init(dispatch)
