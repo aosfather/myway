@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+const Cluster_Static = "-" //静态资源
 //基本的代理
 type HttpProxy struct {
 	port         int
@@ -46,15 +47,21 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	//根据api定义内容，进行 auth、access、等等的处理
 	var res *fasthttp.Response
 	if this.beforeCall(api, ctx) {
-		//根据分流和loadbalance选取server
-		server := this.loadBalance(api, ctx)
-		if server == nil {
-			ctx.Response.SetBodyString("the server not exist!")
-			return
-		}
+		//如果 cluster为"-",表示静态资源
+		if api.Cluster.ID == Cluster_Static {
+			res = this.getStaticResource(&ctx.Request, api.ServerUrl)
+		} else {
+			//根据分流和loadbalance选取server
+			server := this.loadBalance(api, ctx)
+			if server == nil {
+				ctx.Response.SetBodyString("the server not exist!")
+				return
+			}
 
-		//目标server调用
-		res = this.call(ctx.Request, server, api.ServerUrl)
+			//目标server调用
+			res = this.call(ctx.Request, server, api.ServerUrl)
+
+		}
 	}
 
 	//完成拦截器处理,处理服务器的返回值
@@ -155,4 +162,11 @@ func copyRequest(req *fasthttp.Request) *fasthttp.Request {
 	newreq.Reset()
 	req.CopyTo(newreq)
 	return newreq
+}
+
+//处理静态资源
+func (this *HttpProxy) getStaticResource(req *fasthttp.Request, url string) *fasthttp.Response {
+	//TODO 完成从指定的静态目录中加载对应的url
+
+	return nil
 }

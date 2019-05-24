@@ -22,6 +22,8 @@ func main() {
 	//启动控制端
 	admin := console.ConsoleDispatch{}
 	admin.Init(8980)
+	sh := console.SystemHandle{}
+	sh.Init(&admin)
 	go admin.Start()
 
 	//启动服务

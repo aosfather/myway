@@ -37,6 +37,8 @@
 ### version 0.6.0
 * 支持从配置文件中注册api、server接口 --ok
 * 支持静态资源
+* 支持console指令:shutdown
+* 支持console指令:reload 重新装载 api定义
 
 
 ### version 0.8.0
