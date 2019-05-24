@@ -5,9 +5,9 @@ import "github.com/aosfather/myway/meta"
 //新增集群
 func (this *DispatchManager) AddCluster(cluster *meta.ServerCluster) {
 	if cluster != nil {
-		c := this.clusterMap[cluster.Name]
+		c := this.clusterMap[cluster.ID]
 		if c == nil {
-			this.clusterMap[cluster.Name] = cluster
+			this.clusterMap[cluster.ID] = cluster
 		}
 	}
 

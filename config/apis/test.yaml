@@ -1,3 +1,5 @@
 namespace: test
 apis:
   - {url: "bb",max_qps: 2,cluster: "test",server_url: "bb"}
+  - {url: "cc",max_qps: 2,cluster: "test",server_url: "bb"}
+  - {url: "dd",max_qps: 20,cluster: "test",server_url: "bb"}
