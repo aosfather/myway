@@ -36,8 +36,8 @@
 
 ### version 0.6.0
 * 支持从配置文件中注册api、server接口 --ok
-* 支持静态资源
-* 支持console指令:shutdown
+* 支持静态资源 --doing
+* 支持console指令:shutdown  --ok
 * 支持console指令:reload 重新装载 api定义
 
 
@@ -51,3 +51,7 @@
 * 实现动态注册api、server接口、动态权限接口
 * 支持网关集群
 * 支持熔断
+
+### version 1.1.0
+* 支持Eureka 注册中心 --planing
+* 支持 Consul 注册中心 
