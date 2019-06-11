@@ -36,15 +36,19 @@
 
 ### version 0.6.0
 * 支持从配置文件中注册api、server接口 --ok
-* 支持静态资源 --doing
 * 支持console指令:shutdown  --ok
-* 支持console指令:reload 重新装载 api定义 --doing
 
 
-### version 0.8.0
+### version 0.7.0
 * 支持accesstoken方式的鉴权（存储走redis) doing
 * 支持权限校验和拦截 planing
+
+### version 0.8.0
 * 支持权限配置 planing
+* 支持console指令:reload 重新装载 api定义 --doing
+
+### version 0.9.0
+* 支持静态资源
 
 
 ### version 1.0.0
@@ -54,7 +58,7 @@
 
 ### version 1.1.0
 * 支持开关规则拦截请求，并返回对应的错误报文
-* 
+
 
 ### version 1.2.0
 * 实现动态注册api、server接口、动态权限接口
