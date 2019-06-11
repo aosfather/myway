@@ -9,7 +9,16 @@ import "os"
  3、restart 查新启动服务
 */
 
+//应用容器
+type ApplicationContent interface {
+	ReloadConfig()   //重新加载配置
+	ReloadAuth()     //重新加载权限
+	Restart()        //重启
+	ShutdownNotify() //关闭通知
+
+}
 type SystemHandle struct {
+	App ApplicationContent
 }
 
 func (this *SystemHandle) Init(c *ConsoleDispatch) {
@@ -20,13 +29,18 @@ func (this *SystemHandle) Init(c *ConsoleDispatch) {
 }
 
 func (this *SystemHandle) shutdown(request *ConsoleRequest) ConsoleResponse {
+	if this.App != nil {
+		this.App.ShutdownNotify()
+	}
 	defer os.Exit(0)
 	return ConsoleResponse{1, "001", "exit by you!"}
 }
 
 func (this *SystemHandle) reload(request *ConsoleRequest) ConsoleResponse {
-	return ConsoleResponse{}
-
+	if this.App != nil {
+		this.App.ReloadConfig()
+	}
+	return ConsoleResponse{1, "001", "reload config success"}
 }
 
 func (this *SystemHandle) restart(request *ConsoleRequest) ConsoleResponse {

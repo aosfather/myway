@@ -70,6 +70,15 @@ type Role struct {
 	setMap    map[string]*AuthobjectSet
 }
 
+//增加权限集
+func (this *Role) AddAuthObjectSet(set *AuthobjectSet) {
+	if this.setMap == nil {
+		this.setMap = make(map[string]*AuthobjectSet)
+	}
+
+	this.setMap[set.Class.Code] = set
+}
+
 func (this *Role) ValidateSelf(key string, obj map[string]string) bool {
 	set := this.setMap[key]
 	if set == nil {
@@ -103,6 +112,25 @@ type AuthobjectSet struct {
 	Class         *AuthClass
 	Objects       []*Authobject
 	ReverseObject []*Authobject
+}
+
+func (this *AuthobjectSet) BuildFieldValue(name string, t ValueType, v string) *AuthFieldValue {
+	f := this.Class.Fields[name]
+	if f != nil {
+		return &AuthFieldValue{f, t, v, nil}
+	}
+
+	return nil
+}
+
+func (this *AuthobjectSet) AddAuthObject(reverse bool, values []*AuthFieldValue) {
+	obj := Authobject{reverse, values}
+	if reverse {
+		this.ReverseObject = append(this.ReverseObject, &obj)
+	} else {
+		this.Objects = append(this.Objects, &obj)
+	}
+
 }
 
 func (this *AuthobjectSet) Validate(key string, obj map[string]string) bool {
