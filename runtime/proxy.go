@@ -26,6 +26,12 @@ func (this *HttpProxy) Init(dispatch *DispatchManager) {
 	this.intercepters = append(this.intercepters, &LimitIntercepter{})
 }
 
+func (this *HttpProxy) AddIntercepter(i Intercepter) {
+	if i != nil {
+		this.intercepters = append(this.intercepters, i)
+	}
+}
+
 func (this *HttpProxy) Start() {
 	this.server = &fasthttp.Server{Handler: this.ServeHTTP}
 	addr := fmt.Sprintf("0.0.0.0:%d", 80)
