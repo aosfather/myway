@@ -220,6 +220,33 @@ type AuthClass struct {
 	Fields map[string]*AuthField //权限字段
 }
 
+func (this *AuthClass) AddFieldByParame(name, desc string, t FieldType) {
+	if name == "" {
+		return
+	}
+
+	f := AuthField{name, desc, t}
+	this.AddField(&f)
+}
+
+func CreateAuthClass(c string) *AuthClass {
+	class := AuthClass{}
+	class.Code = c
+	return &class
+}
+
+func (this *AuthClass) AddField(f *AuthField) {
+	if f == nil || f.Code == "" {
+		return
+	}
+	if this.Fields == nil {
+		this.Fields = make(map[string]*AuthField)
+	}
+
+	this.Fields[f.Code] = f
+
+}
+
 //权限字段
 type AuthField struct {
 	Code string    //字段ID

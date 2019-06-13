@@ -3,3 +3,5 @@ path:
   api: config/apis
   access_log:
   log:
+
+auth:

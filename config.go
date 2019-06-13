@@ -19,6 +19,8 @@ type yamlConfig struct {
 type ApplicationConfigurate struct {
 	ServerPath    string `yaml:"server"`
 	ApiPath       string `yaml:"api"`
+	UserPath      string `yaml:"user"`
+	RolePath      string `yaml:"role"`
 	AccessLogFile string `yaml:"access_log"`
 	logFile       string `yaml:"log"`
 }
