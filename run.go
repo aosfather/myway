@@ -39,6 +39,9 @@ func main() {
 
 	proxy := runtime.HttpProxy{}
 	proxy.Init(dispatch)
+	accss := runtime.AccessIntercepter{}
+	accss.Init("", 0, 7200, nil)
+	proxy.AddIntercepter(&accss)
 	proxy.Start()
 
 }

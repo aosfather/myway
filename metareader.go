@@ -91,6 +91,7 @@ type apiDefine struct {
 	MaxQPS    int64  `yaml:"max_qps"`
 	ServerUrl string `yaml:"server_url"`
 	Cluster   string `yaml:"cluster"`
+	Auth      bool   `yaml:"auth"`
 }
 
 func (this *apiDefine) toApi(fix string) *meta.Api {
@@ -99,6 +100,9 @@ func (this *apiDefine) toApi(fix string) *meta.Api {
 	api.NameSpace = this.Namespace
 	api.Url = "/" + fix + "/" + this.Url
 	api.MaxQPS = this.MaxQPS
+	if this.Auth {
+		api.AuthFilter = "access_token"
+	}
 	return &api
 }
 

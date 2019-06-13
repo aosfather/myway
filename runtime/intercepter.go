@@ -83,8 +83,10 @@ func (this *AccessIntercepter) Init(addr string, db int, expire int64, rmm core.
 func (this *AccessIntercepter) Before(api *meta.Api, ctx *fasthttp.RequestCtx) (bool, error) {
 	//1、看api是否需要token
 	if api.AuthFilter == "access_token" {
+		fmt.Println("in this")
 		//2、看token是否有效
 		token := string(ctx.Request.PostArgs().Peek("access_token"))
+		fmt.Println("in this token")
 		t := this.tm.GetToken(token)
 		//3、看是否有权限调用
 		if t != nil {
@@ -96,7 +98,8 @@ func (this *AccessIntercepter) Before(api *meta.Api, ctx *fasthttp.RequestCtx) (
 
 		}
 
-		return false, nil
+		ctx.Response.SetBodyString("no auth!")
+		return false, fmt.Errorf("no auth accssee the url!")
 
 	}
 
