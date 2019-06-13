@@ -149,7 +149,9 @@ func (this *HttpProxy) call(req fasthttp.Request, server *meta.Server, url strin
 	res, err := this.client.Do(r, server.Addr(), nil)
 	if err != nil {
 		fmt.Println(err.Error())
-		return nil
+		r := fasthttp.Response{}
+		r.SetBodyString("the server error! used default return!")
+		return &r
 	}
 	defer fasthttp.ReleaseRequest(r)
 	return res
