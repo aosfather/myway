@@ -27,14 +27,44 @@ const (
 
 )
 
+//内部处理插件
+type HandlePlugin func(req *fasthttp.Request) *fasthttp.Response
+
+type pluginManager struct {
+	plugins map[string]HandlePlugin
+}
+
+func (this *pluginManager) addPlugin(name string, plugin HandlePlugin) {
+	if this.plugins == nil {
+		this.plugins = make(map[string]HandlePlugin)
+	}
+
+	if name != "" && plugin != nil {
+		this.plugins[name] = plugin
+	}
+}
+
+func (this *pluginManager) callPlugin(name string, req *fasthttp.Request) *fasthttp.Response {
+	if name != "" && req != nil {
+		p := this.plugins[name]
+		if p != nil {
+			return p(req)
+		}
+
+	}
+
+	//构建通用错误
+	res := fasthttp.Response{}
+	res.SetBodyString("The plugin server not exist!")
+	return &res
+}
+
 /**
   插件
   基于lua脚本的插件
   1、内部的方法
   2、功能的扩展
 */
-type HandlePlugin func(req fasthttp.Request) *fasthttp.Response
-
 type PluginCore interface {
 	GetFromContext(key string) interface{} //获取信息
 	SetContext(key string, v interface{})  //设置信息

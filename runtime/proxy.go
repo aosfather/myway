@@ -10,6 +10,7 @@ import (
 )
 
 const Cluster_Static = "-" //静态资源
+const Cluster_This = "."   //本地插件
 //基本的代理
 type HttpProxy struct {
 	port         int
@@ -17,13 +18,32 @@ type HttpProxy struct {
 	dispatch     *DispatchManager //分发管理
 	intercepters []Intercepter    //拦截器处理
 	client       *FastHTTPClient
+	plugins      *pluginManager
 }
 
 func (this *HttpProxy) Init(dispatch *DispatchManager) {
 	this.dispatch = dispatch
+	//加入默认的集群，静态资源，本地插件
+	if this.dispatch != nil {
+		cstatic := meta.ServerCluster{}
+		cstatic.ID = "-"
+		cstatic.Name = "-"
+		this.dispatch.AddCluster(&cstatic)
+		cthis := meta.ServerCluster{}
+		cthis.ID = "."
+		cthis.Name = "."
+		this.dispatch.AddCluster(&cthis)
+	}
 	this.client = NewFastHTTPClientOption(DefaultHTTPOption())
 	this.intercepters = append(this.intercepters, &AccessLogIntercepter{})
 	this.intercepters = append(this.intercepters, &LimitIntercepter{})
+	this.plugins = &pluginManager{}
+}
+
+func (this *HttpProxy) AddPlugin(name string, plugin HandlePlugin) {
+	if this.plugins != nil {
+		this.plugins.addPlugin(name, plugin)
+	}
 }
 
 func (this *HttpProxy) AddIntercepter(i Intercepter) {
@@ -56,6 +76,9 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 		//如果 cluster为"-",表示静态资源
 		if api.Cluster.ID == Cluster_Static {
 			res = this.getStaticResource(&ctx.Request, api.ServerUrl)
+		} else if api.Cluster.ID == Cluster_This {
+			//内部插件接口处理
+			res = this.plugins.callPlugin(api.ServerUrl, &ctx.Request)
 		} else {
 			//根据分流和loadbalance选取server
 			server := this.loadBalance(api, ctx)
@@ -174,7 +197,11 @@ func copyRequest(req *fasthttp.Request) *fasthttp.Request {
 
 //处理静态资源
 func (this *HttpProxy) getStaticResource(req *fasthttp.Request, url string) *fasthttp.Response {
+	res := fasthttp.Response{}
 	//TODO 完成从指定的静态目录中加载对应的url
 
-	return nil
+	//如果不存在构建通用错误
+	res.SetBodyString("The url not exist!")
+	return &res
+
 }
