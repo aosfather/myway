@@ -2,4 +2,4 @@ namespace: test
 apis:
   - {url: "bb",max_qps: 2,cluster: "test",server_url: "bb",auth: true}
   - {url: "cc",max_qps: 2,cluster: "-",server_url: "bb"}
-  - {url: "dd",max_qps: 5,cluster: "test",server_url: "bb"}
+  - {url: "dd",max_qps: 5,cluster: ".",server_url: "tokens"}

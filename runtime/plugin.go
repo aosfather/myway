@@ -45,6 +45,7 @@ func (this *pluginManager) addPlugin(name string, plugin HandlePlugin) {
 }
 
 func (this *pluginManager) callPlugin(name string, req *fasthttp.Request) *fasthttp.Response {
+	fmt.Println("call plugin " + name)
 	if name != "" && req != nil {
 		p := this.plugins[name]
 		if p != nil {

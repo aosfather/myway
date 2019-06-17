@@ -117,6 +117,13 @@ func (this *userManager) Load(userpath string) {
 	}
 }
 
+func (this *userManager) GetGrandType() string {
+	return "access_token"
+}
+func (this *userManager) BuildToken(user string, secret string) (bool, string) {
+	return true, "token!"
+}
+
 func (this *userManager) Validate(name, pwd string) (bool, string) {
 	if name == "" || pwd == "" {
 		return false, ""

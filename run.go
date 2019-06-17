@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/aosfather/myway/console"
+	"github.com/aosfather/myway/extends"
 	"github.com/aosfather/myway/runtime"
 )
 
@@ -71,6 +72,9 @@ func (this *application) Start() {
 	//加载api定义
 	this.loadApisConfig(e.Config)
 
+	//加载插件
+	this.loadPlugins(e.Config)
+
 	//启动控制端
 	go this.admin.Start()
 	//启动代理
@@ -122,4 +126,12 @@ func (this *application) initLog(config ApplicationConfigurate) {
 	logfactory.Init(config)
 	runtime.SetAccessLogger(logfactory.GetAccessLogger())
 	runtime.Log("test 001")
+}
+
+func (this *application) loadPlugins(config ApplicationConfigurate) {
+	token := extends.AccessTokenImp{}
+	um := userManager{}
+	um.Load(config.UserPath)
+	token.Add(&um)
+	this.proxy.AddPlugin("tokens", token.Call)
 }
