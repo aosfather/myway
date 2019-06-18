@@ -1,7 +1,6 @@
-role:
-  name: test1
-  super:
-  white:
-      - {url: "/aa/aa/a"}
-  black:
-      -
+name: test1
+super:
+white:
+   - {url: "/aa/aa/a"}
+black:
+   -

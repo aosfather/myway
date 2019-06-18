@@ -93,12 +93,15 @@ func (this *yamlAuthMetaManager) Load(rolepath string) {
 //用户管理
 type userManager struct {
 	users map[string]*userInfo
+	tm    *core.TokenManager
 }
 
 func (this *userManager) Load(userpath string) {
+	fmt.Println(userpath)
 	files, e := ioutil.ReadDir(userpath)
 	if e != nil {
 		//TODO 输出错误信息，结束
+		fmt.Println(e.Error())
 		return
 	}
 
@@ -117,11 +120,25 @@ func (this *userManager) Load(userpath string) {
 	}
 }
 
+func (this *userManager) SetTokenManager(tm *core.TokenManager) {
+	this.tm = tm
+}
+
 func (this *userManager) GetGrandType() string {
 	return "access_token"
 }
 func (this *userManager) BuildToken(user string, secret string) (bool, string) {
-	return true, "token!"
+	v, r := this.Validate(user, secret)
+	if v {
+		//调用tokenmanager创建token
+		if this.tm != nil {
+			_, id := this.tm.CreateToken(user, r)
+			return true, id
+		}
+		fmt.Println("tm is nil")
+	}
+
+	return false, "no token"
 }
 
 func (this *userManager) Validate(name, pwd string) (bool, string) {
@@ -130,11 +147,13 @@ func (this *userManager) Validate(name, pwd string) (bool, string) {
 	}
 
 	u := this.users[name]
+	fmt.Println(u)
 
 	if u != nil && u.PassWord == pwd {
 		return true, u.Role
 	}
 
+	fmt.Println("validate failed", name, pwd)
 	return false, ""
 }
 

@@ -1,4 +1,3 @@
-user:
-  name: test1
-  pwd:  xxxxxx
-  role: test1
+name: "test1"
+pwd:  "xxxxxx"
+role: test1

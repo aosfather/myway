@@ -65,10 +65,10 @@ func (this *application) Start() {
 	this.initLog(e.Config)
 	//构建核心组件
 	this.init()
+
 	//加载管理端插件
 	this.initAdminHandle()
-	//加载插件
-	this.initIntercepter()
+
 	//加载api定义
 	this.loadApisConfig(e.Config)
 
@@ -105,12 +105,6 @@ func (this *application) loadApisConfig(config ApplicationConfigurate) {
 
 }
 
-func (this *application) initIntercepter() {
-	accss := runtime.AccessIntercepter{}
-	accss.Init("", 0, 7200, nil)
-	this.proxy.AddIntercepter(&accss)
-}
-
 func (this *application) initAdminHandle() {
 	//增加系统接口
 	sh := console.SystemHandle{}
@@ -129,9 +123,11 @@ func (this *application) initLog(config ApplicationConfigurate) {
 }
 
 func (this *application) loadPlugins(config ApplicationConfigurate) {
-	token := extends.AccessTokenImp{}
+	accss := extends.AccessTokenImp{}
+	accss.Init("", 0, 7200, nil)
+	this.proxy.AddIntercepter(&accss)
 	um := userManager{}
 	um.Load(config.UserPath)
-	token.Add(&um)
-	this.proxy.AddPlugin("tokens", token.Call)
+	accss.Add(&um)
+	this.proxy.AddPlugin("tokens", accss.Call)
 }

@@ -2,6 +2,10 @@ package extends
 
 import (
 	"fmt"
+	"github.com/aosfather/myway/core"
+	"github.com/aosfather/myway/meta"
+	"github.com/aosfather/myway/runtime"
+	"github.com/go-redis/redis"
 	"github.com/valyala/fasthttp"
 )
 
@@ -13,14 +17,19 @@ import (
 type TokenCreator interface {
 	GetGrandType() string
 	BuildToken(user string, secret string) (bool, string)
+	SetTokenManager(tm *core.TokenManager)
 }
 
 type AccessTokenImp struct {
+	runtime.BaseIntercepter
+	tm      core.TokenManager
+	rm      core.RoleManager
 	builder []TokenCreator
 }
 
 func (this *AccessTokenImp) Add(tb TokenCreator) {
 	if tb != nil {
+		tb.SetTokenManager(&this.tm)
 		this.builder = append(this.builder, tb)
 	}
 }
@@ -65,4 +74,71 @@ func (this *AccessTokenImp) getTokenCreator(t string) TokenCreator {
 	}
 
 	return nil
+}
+
+func (this *AccessTokenImp) Init(addr string, db int, expire int64, rmm core.RoleMetaManager) {
+	ts := RedisTokenStore{}
+	ts.Init(addr, db)
+	this.tm.Store = &ts
+	if expire <= 0 {
+		this.tm.Expire = 7200 //默认两小时
+	} else {
+		this.tm.Expire = expire
+	}
+
+	//设置读取权限元信息
+	this.rm.SetMetaManager(rmm)
+}
+
+func (this *AccessTokenImp) Before(api *meta.Api, ctx *fasthttp.RequestCtx) (bool, error) {
+	//1、看api是否需要token
+	if api.AuthFilter == "access_token" {
+		fmt.Println("in this")
+		//2、看token是否有效
+		token := string(ctx.Request.PostArgs().Peek("access_token"))
+		fmt.Println("in this token")
+		t := this.tm.GetToken(token)
+		//3、看是否有权限调用
+		if t != nil {
+			m := make(map[string]string)
+			m["url"] = api.Url
+			if this.rm.Validate(t.Role, "url", m) {
+				return true, nil
+			}
+
+		}
+
+		ctx.Response.SetBodyString("no auth!")
+		return false, fmt.Errorf("no auth accssee the url!")
+
+	}
+
+	return true, nil
+}
+
+type RedisTokenStore struct {
+	client *redis.Client
+}
+
+func (this *RedisTokenStore) Init(addr string, db int) {
+	this.client = redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: "", // no password set
+		DB:       db,
+	})
+}
+
+//获取token
+func (this *RedisTokenStore) GetToken(id string) *core.AccessToken {
+	if this.client != nil {
+
+	}
+	return nil
+}
+
+//保存token
+func (this *RedisTokenStore) SaveToken(id string, t *core.AccessToken, expire int64) {
+	if this.client != nil {
+
+	}
 }

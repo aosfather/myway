@@ -37,7 +37,7 @@ func (this *TokenManager) GetToken(id string) *AccessToken {
 	return nil
 }
 
-func (this *TokenManager) CreateToken(user string, role string) *AccessToken {
+func (this *TokenManager) CreateToken(user string, role string) (*AccessToken, string) {
 	id := CreateUUID() //创建唯一的ID
 	vcode := GetMd5str(id)
 	t := AccessToken{vcode, user, time.Now().Unix(), role}
@@ -45,7 +45,7 @@ func (this *TokenManager) CreateToken(user string, role string) *AccessToken {
 		this.Store.SaveToken(id, &t, this.Expire)
 	}
 
-	return &t
+	return &t, id
 }
 
 //访问token
