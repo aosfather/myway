@@ -6,4 +6,9 @@ path:
   user: config/users
   role: config/roles
 
-auth:
+system:
+  auth_redis:
+        address: 127.0.0.1
+        db: 1
+        expire: 7200
+

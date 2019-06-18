@@ -6,6 +6,9 @@ import (
 	"github.com/aosfather/myway/runtime"
 )
 
+//token生成的插件
+const _PLUGIN_TOKEN = "tokens"
+
 func main() {
 	///*
 	//   1、读取配置文件
@@ -73,7 +76,7 @@ func (this *application) Start() {
 	this.loadApisConfig(e.Config)
 
 	//加载插件
-	this.loadPlugins(e.Config)
+	this.loadPlugins(e.Config, e.System)
 
 	//启动控制端
 	go this.admin.Start()
@@ -122,12 +125,22 @@ func (this *application) initLog(config ApplicationConfigurate) {
 	runtime.Log("test 001")
 }
 
-func (this *application) loadPlugins(config ApplicationConfigurate) {
-	accss := extends.AccessTokenImp{}
-	accss.Init("", 0, 7200, nil)
-	this.proxy.AddIntercepter(&accss)
+/**
+  加载插件
+*/
+func (this *application) loadPlugins(config ApplicationConfigurate, system SystemConfigurate) {
+	//加载权限配置
+	rm := yamlAuthMetaManager{}
+	rm.Load(config.RolePath)
+	//加载用户配置
 	um := userManager{}
 	um.Load(config.UserPath)
+	//加载access_token插件，token拦截及token生成的实现
+	accss := extends.AccessTokenImp{}
+	accss.Init(system.AuthRedis.Address, system.AuthRedis.DataBase, system.AuthRedis.Expire, &rm)
 	accss.Add(&um)
-	this.proxy.AddPlugin("tokens", accss.Call)
+
+	this.proxy.AddIntercepter(&accss)
+
+	this.proxy.AddPlugin(_PLUGIN_TOKEN, accss.Call)
 }

@@ -15,6 +15,7 @@ import (
 
 type yamlConfig struct {
 	Config ApplicationConfigurate `yaml:"path"`
+	System SystemConfigurate      `yaml:"system"`
 }
 type ApplicationConfigurate struct {
 	ServerPath    string `yaml:"server"`
@@ -36,4 +37,14 @@ func (this *yamlConfig) Load(file string) {
 	if err != nil {
 		log.Fatalf("config file read error %v", err)
 	}
+}
+
+type SystemConfigurate struct {
+	AuthRedis AuthRedisConfig `yaml:"auth_redis"`
+}
+
+type AuthRedisConfig struct {
+	Address  string `yaml:"address"`
+	DataBase int    `yaml:"db"`
+	Expire   int64  `yaml:"expire"`
 }

@@ -42,6 +42,14 @@ type yamlAuthMetaManager struct {
 	roles map[string]*core.Role
 }
 
+func (this *yamlAuthMetaManager) FindRole(name string) *core.Role {
+	if this.roles != nil {
+		return this.roles[name]
+	}
+
+	return nil
+}
+
 func (this *yamlAuthMetaManager) Load(rolepath string) {
 	files, e := ioutil.ReadDir(rolepath)
 	if e != nil {
