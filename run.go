@@ -10,51 +10,12 @@ import (
 const _PLUGIN_TOKEN = "tokens"
 
 func main() {
-	///*
-	//   1、读取配置文件
-	//   2、根据指定的目录，加载api的定义
-	//*/
-	//e := yamlConfig{}
-	//e.Load("config.yaml")
-	//
-	////初始化日志组件
-	//logfactory := logrusFactory{}
-	//logfactory.Init(e.Config)
-	//runtime.SetAccessLogger(logfactory.GetAccessLogger())
-	//runtime.Log("test 001")
-	//
-	////启动控制端
-	//admin := console.ConsoleDispatch{}
-	//admin.Init(8980)
-	//sh := console.SystemHandle{}
-	//sh.Init(&admin)
-	//go admin.Start()
-	//
-	////启动服务
-	//dispatch := &runtime.DispatchManager{}
-	//dispatch.Init()
-	//handle := console.RegisterHandle{}
-	//handle.Init(&admin, dispatch)
-	//
-	//proxy := runtime.HttpProxy{}
-	//proxy.Init(dispatch)
-	//
-	////从配置中加载cluster的定义
-	//LoadClusterFromFile(e.Config.ServerPath, dispatch)
-	////从api的定义中加载代理的api
-	//LoadAPIFromFile(e.Config.ApiPath, dispatch)
-	//
-	//
-	//accss := runtime.AccessIntercepter{}
-	//accss.Init("", 0, 7200, nil)
-	//proxy.AddIntercepter(&accss)
-	//proxy.Start()
-
 	app := application{}
 	app.Start()
 
 }
 
+//应用容器，会实现容器接口，用于做admin 接口的控制
 type application struct {
 	admin    console.ConsoleDispatch
 	dispatch *runtime.DispatchManager
@@ -100,6 +61,7 @@ func (this *application) init() {
 
 }
 
+//加载api的定义
 func (this *application) loadApisConfig(config ApplicationConfigurate) {
 	//从配置中加载cluster的定义
 	LoadClusterFromFile(config.ServerPath, this.dispatch)
@@ -108,6 +70,7 @@ func (this *application) loadApisConfig(config ApplicationConfigurate) {
 
 }
 
+//初始化管理控制台
 func (this *application) initAdminHandle() {
 	//增加系统接口
 	sh := console.SystemHandle{}
@@ -117,6 +80,7 @@ func (this *application) initAdminHandle() {
 	handle.Init(&this.admin, this.dispatch)
 }
 
+//初始化日志
 func (this *application) initLog(config ApplicationConfigurate) {
 	//初始化日志组件
 	logfactory := logrusFactory{}
@@ -140,7 +104,6 @@ func (this *application) loadPlugins(config ApplicationConfigurate, system Syste
 	accss.Init(system.AuthRedis.Address, system.AuthRedis.DataBase, system.AuthRedis.Expire, &rm)
 	accss.Add(&um)
 
-	this.proxy.AddIntercepter(&accss)
-
-	this.proxy.AddPlugin(_PLUGIN_TOKEN, accss.Call)
+	this.proxy.AddIntercepter(&accss)               //token拦截
+	this.proxy.AddPlugin(_PLUGIN_TOKEN, accss.Call) //token生成插件服务
 }
