@@ -4,13 +4,21 @@ import (
 	"fmt"
 	"github.com/aosfather/myway/meta"
 	"github.com/valyala/fasthttp"
+	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 )
 
 const Cluster_Static = "-" //静态资源
 const Cluster_This = "."   //本地插件
+
+type HttpConfig struct {
+	Root string
+	Port int
+}
+
 //基本的代理
 type HttpProxy struct {
 	port         int
@@ -19,6 +27,7 @@ type HttpProxy struct {
 	intercepters []Intercepter    //拦截器处理
 	client       *FastHTTPClient
 	plugins      *pluginManager
+	staticRoot   string //静态资源根目录
 }
 
 func (this *HttpProxy) Init(dispatch *DispatchManager) {
@@ -52,9 +61,20 @@ func (this *HttpProxy) AddIntercepter(i Intercepter) {
 	}
 }
 
+//配置
+func (this *HttpProxy) SetConfig(config HttpConfig) {
+	this.staticRoot = config.Root
+	this.port = config.Port
+}
+
 func (this *HttpProxy) Start() {
 	this.server = &fasthttp.Server{Handler: this.ServeHTTP}
-	addr := fmt.Sprintf("0.0.0.0:%d", 80)
+
+	if this.port <= 0 {
+		this.port = 80
+	}
+
+	addr := fmt.Sprintf("0.0.0.0:%d", this.port)
 	this.server.ListenAndServe(addr)
 
 }
@@ -198,10 +218,33 @@ func copyRequest(req *fasthttp.Request) *fasthttp.Request {
 //处理静态资源
 func (this *HttpProxy) getStaticResource(req *fasthttp.Request, url string) *fasthttp.Response {
 	res := fasthttp.Response{}
-	//TODO 完成从指定的静态目录中加载对应的url
+	//完成从指定的静态目录中加载对应的url
+	if this.staticRoot != "" {
+
+		realurl := this.staticRoot + "/" + url
+		if PathExists(realurl) { //是否存在
+			data, err := ioutil.ReadFile(realurl)
+			if err == nil {
+				res.SetBody(data)
+			}
+
+		}
+
+	}
 
 	//如果不存在构建通用错误
 	res.SetBodyString("The url not exist!")
 	return &res
 
+}
+
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
 }

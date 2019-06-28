@@ -45,11 +45,11 @@
 
 ### version 0.8.0
 * 支持权限配置 --ok
-* 支持console指令:reload 重新装载 api定义 --doing
+* 支持console指令:reload 重新装载 api定义 --ok
 
 ### version 0.9.0
-* 支持静态资源
-* 支持默认获取accesstoken的实现 --planing 
+* 支持静态资源 --ok
+* 支持默认获取accesstoken的实现 --ok 
 类似于微信 method：GET ，参数：grandtype ==access_token ,appid==分配的应用id,secret==秘钥
 
 ### version 1.0.0

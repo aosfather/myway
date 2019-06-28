@@ -20,12 +20,13 @@ type application struct {
 	admin    console.ConsoleDispatch
 	dispatch *runtime.DispatchManager
 	proxy    *runtime.HttpProxy
+	config   *ApplicationConfigurate
 }
 
 func (this *application) Start() {
 	e := yamlConfig{}
 	e.Load("config.yaml")
-
+	this.config = &e.Config
 	this.initLog(e.Config)
 	//构建核心组件
 	this.init()
@@ -74,6 +75,7 @@ func (this *application) loadApisConfig(config ApplicationConfigurate) {
 func (this *application) initAdminHandle() {
 	//增加系统接口
 	sh := console.SystemHandle{}
+	sh.App = this
 	sh.Init(&this.admin)
 	//增加注册接口
 	handle := console.RegisterHandle{}
@@ -106,4 +108,31 @@ func (this *application) loadPlugins(config ApplicationConfigurate, system Syste
 
 	this.proxy.AddIntercepter(&accss)               //token拦截
 	this.proxy.AddPlugin(_PLUGIN_TOKEN, accss.Call) //token生成插件服务
+}
+
+func (this *application) ShutdownNotify() {
+
+}
+func (this *application) PauseService() {
+
+}
+func (this *application) RestoreService() {
+
+}
+func (this *application) ReloadConfig() {
+
+}
+func (this *application) ReloadApis() {
+	//加载api定义
+	this.loadApisConfig(*this.config)
+}
+
+//重新加载权限
+func (this *application) ReloadAuth() {
+
+}
+
+//重启
+func (this *application) Restart() {
+
 }

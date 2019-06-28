@@ -1,6 +1,10 @@
 package console
 
-import "os"
+import (
+	"encoding/json"
+	"github.com/aosfather/myway/core"
+	"os"
+)
 
 /**
 系统控制指令
@@ -8,17 +12,12 @@ import "os"
  2、reload   重新加载 ,可选参数 api(定义) all（所有配置）
  3、restart 查新启动服务
 */
-
-//应用容器
-type ApplicationContent interface {
-	ReloadConfig()   //重新加载配置
-	ReloadAuth()     //重新加载权限
-	Restart()        //重启
-	ShutdownNotify() //关闭通知
-
+type reloadRequest struct {
+	Tag string `json:"tag"`
 }
+
 type SystemHandle struct {
-	App ApplicationContent
+	App core.Application
 }
 
 func (this *SystemHandle) Init(c *ConsoleDispatch) {
@@ -37,7 +36,15 @@ func (this *SystemHandle) shutdown(request *ConsoleRequest) ConsoleResponse {
 }
 
 func (this *SystemHandle) reload(request *ConsoleRequest) ConsoleResponse {
+	req := reloadRequest{}
+	data, _ := request.Data.MarshalJSON()
+	json.Unmarshal(data, &req)
 	if this.App != nil {
+		if req.Tag == "api" {
+			this.App.ReloadApis()
+			return ConsoleResponse{1, "001", "reload apis config success"}
+		}
+		//默认加载config
 		this.App.ReloadConfig()
 	}
 	return ConsoleResponse{1, "001", "reload config success"}
