@@ -53,23 +53,19 @@
 类似于微信 method：GET ，参数：grandtype ==access_token ,appid==分配的应用id,secret==秘钥
 
 ### version 1.0.0
-* 支持reload方法来重新装载权限配置
-* 完整的配置
-* 支持模仿nginx错误返回，例如 404 500 等
-
-### version 1.1.0
-* 支持开关规则拦截请求，并返回对应的错误报文
+* 支持reload方法来重新装载权限配置 --ok
+* 完整的配置  --doing
 
 
-### version 1.2.0
+### feature pool
 * 实现动态注册api、server接口、动态权限接口
-* 支持网关集群
 * 支持熔断
-
-### version 1.5.0
+* 支持网关集群
+* 支持开关规则拦截请求，并返回对应的错误报文
+* 支持模仿nginx错误返回，例如 404 500 等
 * 支持模拟apache错误返回
-* 支持lua扩展
-
-### version 2.0.0
-* 支持Eureka 注册中心 
+* 支持 lua扩展
+* 支持 Eureka 注册中心 
 * 支持 Consul 注册中心 
+* 支持 prometheus
+* 支持服务上线、验证 状态，支持服务平滑升级

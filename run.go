@@ -21,6 +21,8 @@ type application struct {
 	dispatch *runtime.DispatchManager
 	proxy    *runtime.HttpProxy
 	config   *ApplicationConfigurate
+	rm       *yamlAuthMetaManager
+	um       *userManager
 }
 
 func (this *application) Start() {
@@ -96,15 +98,15 @@ func (this *application) initLog(config ApplicationConfigurate) {
 */
 func (this *application) loadPlugins(config ApplicationConfigurate, system SystemConfigurate) {
 	//加载权限配置
-	rm := yamlAuthMetaManager{}
-	rm.Load(config.RolePath)
+	this.rm = &yamlAuthMetaManager{}
+	this.rm.Load(config.RolePath)
 	//加载用户配置
-	um := userManager{}
-	um.Load(config.UserPath)
+	this.um = &userManager{}
+	this.um.Load(config.UserPath)
 	//加载access_token插件，token拦截及token生成的实现
 	accss := extends.AccessTokenImp{}
-	accss.Init(system.AuthRedis.Address, system.AuthRedis.DataBase, system.AuthRedis.Expire, &rm)
-	accss.Add(&um)
+	accss.Init(system.AuthRedis.Address, system.AuthRedis.DataBase, system.AuthRedis.Expire, this.rm)
+	accss.Add(this.um)
 
 	this.proxy.AddIntercepter(&accss)               //token拦截
 	this.proxy.AddPlugin(_PLUGIN_TOKEN, accss.Call) //token生成插件服务
@@ -129,7 +131,8 @@ func (this *application) ReloadApis() {
 
 //重新加载权限
 func (this *application) ReloadAuth() {
-
+	this.rm.Load(this.config.RolePath)
+	this.um.Load(this.config.UserPath)
 }
 
 //重启

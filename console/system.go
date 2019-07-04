@@ -43,6 +43,9 @@ func (this *SystemHandle) reload(request *ConsoleRequest) ConsoleResponse {
 		if req.Tag == "api" {
 			this.App.ReloadApis()
 			return ConsoleResponse{1, "001", "reload apis config success"}
+		} else if req.Tag == "auth" {
+			this.App.ReloadAuth()
+			return ConsoleResponse{1, "001", "reload auth config success"}
 		}
 		//默认加载config
 		this.App.ReloadConfig()
