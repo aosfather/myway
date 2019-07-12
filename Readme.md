@@ -54,7 +54,7 @@
 
 ### version 1.0.0
 * 支持reload方法来重新装载权限配置 --ok
-* 完整的配置  --doing
+* 完整的配置  --ok
 
 
 ### feature pool
