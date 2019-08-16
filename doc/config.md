@@ -23,8 +23,8 @@ system:
      * api 用于api接口的配置定义
      * access_log 访问日志的存放目录
      * log 日志的存放目录
-     * user 鉴权的用户定义
-     * role 角色定义
+     * user 鉴权的用户定义--一个用户一个文件，yaml格式
+     * role 角色定义   --一个角色一个文件，yaml格式
    * system 系统相关配置 
      * auth_redis 权限配置信息存储用的redis相关配置信息
        * address redis的IP地址
