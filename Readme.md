@@ -56,16 +56,22 @@
 * 支持reload方法来重新装载权限配置 --ok
 * 完整的配置  --ok
 
+### version 1.1.0 
+
 
 ### feature pool
 * 实现动态注册api、server接口、动态权限接口
 * 支持熔断
-* 支持网关集群
+* 支持网关集群(paxos或Raft--接入ETCD)
 * 支持开关规则拦截请求，并返回对应的错误报文
 * 支持模仿nginx错误返回，例如 404 500 等
 * 支持模拟apache错误返回
 * 支持 lua扩展
 * 支持 Eureka 注册中心 
-* 支持 Consul 注册中心 
+* 支持 Consul 注册中心
+* 支持 ETCD 注册中心 
 * 支持 prometheus
 * 支持服务上线、验证 状态，支持服务平滑升级
+* 支持mock，能配置mock实现用于测试和demo等
+* 支持分布式任务调度（workflow)用于组合api
+* 支持分布式定时调度功能，用于提供分布式的定时触发功能(cron)
