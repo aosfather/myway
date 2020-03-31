@@ -5,6 +5,7 @@
 package runtime
 
 import (
+	"github.com/aosfather/myway/core"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -110,7 +111,7 @@ func (n *node) addRoute(path string, handle Handle) {
 			// This also implies that the common prefix contains no ':' or '*'
 			// since the existing key can't contain those chars.
 			i := 0
-			max := min(len(path), len(n.path))
+			max := core.Min(len(path), len(n.path))
 			for i < max && path[i] == n.path[i] {
 				i++
 			}
@@ -533,7 +534,7 @@ walk: // outer loop for walking the tree
 					// runes are up to 4 byte long,
 					// -4 would definitely be another rune
 					var off int
-					for max := min(len(loNPath), 3); off < max; off++ {
+					for max := core.Min(len(loNPath), 3); off < max; off++ {
 						if i := len(loNPath) - off; utf8.RuneStart(loOld[i]) {
 							// read rune from cached lowercase path
 							rv, _ = utf8.DecodeRuneInString(loOld[i:])

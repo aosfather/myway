@@ -8,6 +8,23 @@ import (
 /**
   dispatch
 */
+type SimpleDispatch struct {
+	defaultNode *node
+}
+
+func (this *SimpleDispatch) Init() {
+	this.defaultNode = &node{}
+}
+
+func (this *SimpleDispatch) AddUrl(url string, handle interface{}) {
+	this.defaultNode.addRoute(url, handle)
+}
+
+func (this *SimpleDispatch) GetUrl(url string) interface{} {
+
+	h, _, _ := this.defaultNode.getValue(url)
+	return h
+}
 
 type DispatchManager struct {
 	domainNode  map[string]*node               //特定域名下的node

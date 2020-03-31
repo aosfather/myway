@@ -33,6 +33,7 @@ func GetRuntimeContext(api *meta.Api) *runtimeContext {
 		run = new(runtimeContext)
 		run.Owner = api
 		run.ID = api.Key()
+		run.QPS.Max = api.MaxQPS
 		run.Init()
 		run.Lb = buildBalance(api.Cluster.Balance)
 		run.Lb.Config(api.Cluster.BalanceConfig)
