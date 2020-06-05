@@ -49,31 +49,31 @@
 
 ### version 0.9.0
 * 支持静态资源 --ok
-* 支持默认获取accesstoken的实现 --ok 
+* 支持默认获取accesstoken的实现 --ok   
 类似于微信 method：GET ，参数：grandtype ==access_token ,appid==分配的应用id,secret==秘钥
 
-### version 1.0.0
+### version 1.0.0 ---当前版本
 * 支持reload方法来重新装载权限配置 --ok
 * 完整的配置  --ok
 
 ### version 1.1.0 
+* 支持分布式任务调度（workflow)用于组合api    --  developing
+* 支持分布式定时调度功能，用于提供分布式的定时触发功能(cron)
+* 实现动态注册api、server接口、动态权限接口
+
+### version 1.2.0 
+* 支持熔断
+* 支持开关规则拦截请求，并返回对应的错误报文
+* 支持 lua扩展
+* 支持lua脚本，可以自定义路由规则
+
+### version 1.3.0
+* 支持自动生成trace id对系统无侵入
+* 支持模仿nginx错误返回，例如 404 500 等
+* 支持模拟apache错误返回 
 
 ### feature pool
-* 实现动态注册api、server接口、动态权限接口
-* 支持熔断
-* 支持自动生成trace id对系统无侵入
-* 支持lua脚本，可以自定义路由规则
 * 支持网关集群(paxos或Raft--接入ETCD)
-* 支持开关规则拦截请求，并返回对应的错误报文
-* 支持模仿nginx错误返回，例如 404 500 等
-* 支持模拟apache错误返回
-* 支持 lua扩展
-* 支持 Eureka 注册中心 
-* 支持 Consul 注册中心
 * 支持 ETCD 注册中心 
 * 支持 prometheus
 * 支持服务上线、验证 状态，支持服务平滑升级
-* 支持mock，能配置mock实现用于测试和demo等
-* 支持分布式任务调度（workflow)用于组合api
-* 支持分布式定时调度功能，用于提供分布式的定时触发功能(cron)
-
