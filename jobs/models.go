@@ -29,46 +29,98 @@ type Stage struct {
 	WorkTask      Task   //任务
 }
 
+type Value struct {
+	Refer bool   //是否引用
+	Value string //取值
+}
+
+//任务类型
+type TaskType byte
+
+const (
+	//基本任务
+	TT_SIMPLE TaskType = 10
+	//动态任务
+	TT_DYNAMIC TaskType = 11
+	//Fork
+	TT_FORK_JOIN TaskType = 12
+	//动态fork
+	TT_FORK_JOIN_DYNAMIC TaskType = 13
+	//选择分支
+	TT_DECISION TaskType = 20
+	//join
+	TT_JOIN TaskType = 14
+	//
+	TT_EXCLUSIVE_JOIN TaskType = 15
+	//循环
+	TT_DO_WHILE TaskType = 21
+	//子流程
+	TT_SUB_WORKFLOW TaskType = 22
+	//事件
+	TT_EVENT TaskType = 30
+	//等待
+	TT_WAIT TaskType = 23
+	//http访问
+	TT_HTTP TaskType = 41
+	//内嵌表达式
+	TT_LAMBDA TaskType = 42
+	//结束
+	TT_TERMINATE TaskType = 24
+	//广播到kafka
+	TT_KAFKA_PUBLISH TaskType = 43
+	//用户自定义
+	TT_USER_DEFINED TaskType = 50
+)
+
+//是否系统任务
+func IsSystemTask(t TaskType) bool {
+	return t < 50
+}
+
 //任务
 type Task struct {
+	Code      string            //任务唯一编码
+	Type      string            //任务类型，system、simple
 	Label     string            //任务名称
-	Handle    string            //任务处理器code
-	InputMap  map[string]string //输入参数mapping key 参数key value 输入参数key
-	OutputMap map[string]string //输出参数mapping key out参数可以，value 放入context中的参数key
+	InputMap  map[string]Value  //输入参数mapping key 参数key value 输入参数key
+	OutputMap map[string]string //输出参数mapping key out参数key，value 放入context中的参数key
+	Retry     RetryConfig       //重试设置
+	Timeout   TimeoutConfig     //超时设置
 }
 
-//job上下文接口
-type JobContext interface {
-	GetContext(key string) string
-	SetContext(key string, v string)
-	Visitor(func(key, v string))
+//重试逻辑
+type RetryLogic byte
+
+const (
+	//重试
+	TP_RETRY TimeoutPolicy = 1
+	//流程超时
+	TP_TIME_OUT_WF TimeoutPolicy = 2
+	//警告
+	TP_ALERT_ONLY TimeoutPolicy = 3
+)
+
+//超时策略
+type TimeoutPolicy byte
+
+const (
+	//固定delay时间后重试
+	RL_FIXED RetryLogic = 1
+	//指数级延时后重试 :  retryDelaySeconds * attempNo 之后重新调度任务
+	RL_EXPONENTIAL_BACKOFF RetryLogic = 2
+)
+
+//超时设置
+type TimeoutConfig struct {
+	TimeoutSeconds         int           //超时时间（秒）
+	Policy                 TimeoutPolicy //超时策略
+	ResponseTimeoutSeconds int           //如果大于0，则如果在此时间后未更新状态，则重新调度任务。
+	PollTimeoutSeconds     int           //拉取超时设置
 }
 
-type JobStore interface {
-	LoadJobInstance(instanceId string) *JobInstance
-}
-
-//job状态存储
-type JobInstanceStore interface {
-	UpdateCurrentStage(instanceId string, code string)
-	SaveContext(instanceId string, context JobContext)
-}
-
-//步骤执行器
-type StageExecutor func(stage Stage, context JobContext) (string, error)
-
-//单个job实例
-type JobInstance struct {
-	job          *Job
-	context      JobContext
-	currentStage string           //当前步骤
-	store        JobInstanceStore //持久化
-}
-
-func (this *JobInstance) Next() bool {
-	return false
-}
-
-func (this *JobInstance) executeStage(s Stage) {
-
+//重试设置
+type RetryConfig struct {
+	Count       int        //重试次数
+	Logic       RetryLogic //策略
+	DelaySecond int        //重试延时
 }

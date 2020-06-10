@@ -1,30 +1,33 @@
 package jobs
 
-type TaskResult struct {
-	Id     string //任务ID
-	Status string //任务状态
-	Msg    string //消息
-	Data   map[string]string
-}
+import (
+	"fmt"
+)
 
 //任务执行器
 type TaskExecutor interface {
-	Execute(taskId string, paramters map[string]string, handle func(TaskResult)) error
-}
-
-type TaskInstanceStore interface {
-	UpdateTaskStatus(instanceId string, stage string, taskId string, status string)
+	//执行
+	Execute(task TaskInstance, paramters map[string]string, handle func(TaskResult)) error
 }
 
 //任务分配器
 type TaskDispatch struct {
+	TaskMan   TaskManager
 	store     TaskInstanceStore
 	registers map[string]TaskExecutor
+	listeners []TaskChangeListener
 }
 
 func (this *TaskDispatch) Init(store TaskInstanceStore) {
 	this.store = store
 	this.registers = make(map[string]TaskExecutor)
+
+}
+
+func (this *TaskDispatch) Addlistener(t ...TaskChangeListener) {
+	if len(t) > 0 {
+		this.listeners = append(this.listeners, t...)
+	}
 }
 
 func (this *TaskDispatch) Register(name string, executor TaskExecutor) {
@@ -34,34 +37,60 @@ func (this *TaskDispatch) Register(name string, executor TaskExecutor) {
 
 }
 
-func (this *TaskDispatch) Dispatch(instanceId string, stage string, t Task, context JobContext) error {
-	name := t.Handle
-	if te, ok := this.registers[name]; ok {
-		//生成唯一的taskID，
-		id := this.createTaskId(instanceId, stage, t)
-		//根据input转换参数
-		input := this.converToInputParameters(t, context)
-		e := te.Execute(id, input, this.handleTaskResult)
-		if e != nil {
-			//写入错误状态
-			this.store.UpdateTaskStatus(instanceId, stage, id, "error")
-			return e
+func (this *TaskDispatch) Dispatch(t TaskInstance) error {
+	//name := t.Code
+	//if te, ok := this.registers[name]; ok {
+	//	//生成唯一的taskID，
+	//	//根据input转换参数
+	//	input := this.converToInputParameters(t, context)
+	//	e := te.Execute(id, input, this.handleTaskResult)
+	//	if e != nil {
+	//		//写入错误状态
+	//		this.store.UpdateTaskStatus(id, "error",e.Error())
+	//		return e
+	//	}
+	//	//写入运行状态
+	//	this.store.UpdateTaskStatus( id, "running","ok")
+	//}
+	//
+	//return nil
+}
+
+func (this *TaskDispatch) CreateTaskId(instanceId string, stage string, t Task) string {
+	return fmt.Sprintf("%s_%s_%s", instanceId, stage, t.Code)
+}
+
+//转换输出参数
+func (this *TaskDispatch) converFromOutputParameters(t Task, out map[string]string) map[string]string {
+	if t.OutputMap != nil && len(t.OutputMap) > 0 {
+		context := make(map[string]string)
+		for key, value := range t.OutputMap {
+			v := out[key]
+			context[value] = v
 		}
-		//写入运行状态
-		this.store.UpdateTaskStatus(instanceId, stage, id, "running")
+
+		return context
 	}
 
 	return nil
+
 }
 
-func (this *TaskDispatch) createTaskId(instanceId string, stage string, t Task) string {
-	return ""
-}
+func (this *TaskDispatch) handleTaskResult(t *TaskResult) {
+	//如果失败，进入重试
+	//如果确认失败，进入补偿
+	if t.Status == TS_COMPLETED {
+		//更新记录
 
-func (this *TaskDispatch) converToInputParameters(t Task, context JobContext) map[string]string {
-	return nil
-}
+		//通知相关listener
+		if this.listeners != nil {
+			for _, l := range this.listeners {
+				if l != nil {
+					l.TaskChangeEventNotify(t)
+				}
 
-func (this *TaskDispatch) handleTaskResult(t TaskResult) {
+			}
+		}
+	}
 
 }
