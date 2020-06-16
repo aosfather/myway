@@ -8,7 +8,29 @@ stages:
      work:
        code: t1
        label: 任务1
-       type: fork
+       type: simple
+       inputs: {p1: {refer: false,value: tp1}}
+       outputs: {p2: d2,p3: d3}
+       retry: {count: 10,logic: fix,delay: 100}
+       timeout: {seconds: 100,policy: retry,poll: 20,response: 40}
+   - code: bb
+     label: 第二步
+     type: normal
+     work:
+       code: t2
+       label: 任务1
+       type: simple
+       inputs: {p1: {refer: false,value: tp1}}
+       outputs: {p2: d2,p3: d3}
+       retry: {count: 10,logic: fix,delay: 100}
+       timeout: {seconds: 100,policy: retry,poll: 20,response: 40}
+   - code: cc
+     label: 第三步
+     type: normal
+     work:
+       code: t3
+       label: 任务1
+       type: simple
        inputs: {p1: {refer: false,value: tp1}}
        outputs: {p2: d2,p3: d3}
        retry: {count: 10,logic: fix,delay: 100}

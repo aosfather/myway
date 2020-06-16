@@ -12,7 +12,7 @@ type TaskExecutor interface {
 
 //任务分配器
 type TaskDispatch struct {
-	TaskMan   TaskManager
+	TaskMan   MetaManager
 	store     TaskInstanceStore
 	registers map[string]TaskExecutor
 	listeners []TaskChangeListener
