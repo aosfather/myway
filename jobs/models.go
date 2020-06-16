@@ -16,17 +16,42 @@ package jobs
 type Job struct {
 	Code   string  //工作编码
 	Label  string  //工作名称
-	stages []Stage //阶段列表
+	Stages []Stage //阶段列表
 
+}
+
+//工作阶段类型
+type StageType byte
+
+const (
+	//普通类型
+	ST_Normal StageType = 1
+	//分区类型
+	ST_Partition StageType = 3
+)
+
+func (this *StageType) UnmarshalYAML(unmarshal func(v interface{}) error) error {
+	var text string
+	unmarshal(&text)
+	switch text {
+	case "normal":
+		*this = ST_Normal
+	case "partition":
+		*this = ST_Partition
+	default:
+		*this = ST_Normal
+
+	}
+	return nil
 }
 
 //工作阶段
 type Stage struct {
-	Code          string //阶段标识
-	Label         string //阶段名称
-	Type          string //类型
-	PartitionTask Task   //分片任务
-	WorkTask      Task   //任务
+	Code          string    //阶段标识
+	Label         string    //阶段名称
+	Type          StageType //类型
+	PartitionTask Task      `yaml:"part"` //分片任务
+	WorkTask      Task      `yaml:"work"` //任务
 }
 
 type Value struct {
@@ -72,6 +97,53 @@ const (
 	TT_USER_DEFINED TaskType = 50
 )
 
+func (this TaskType) GetName() string {
+	var name string
+	switch this {
+	case TT_DECISION:
+		name = "decision"
+	case TT_EVENT:
+		name = "event"
+	case TT_SIMPLE:
+		name = "simple"
+	case TT_FORK_JOIN:
+		name = "fork"
+	case TT_JOIN:
+		name = "join"
+	case TT_SUB_WORKFLOW:
+		name = "subworkflow"
+	default:
+		name = "unknown"
+
+	}
+
+	return name
+}
+func (this *TaskType) UnmarshalYAML(unmarshal func(v interface{}) error) error {
+	var text string
+	unmarshal(&text)
+	switch text {
+	case "simple":
+		*this = TT_SIMPLE
+	case "decision":
+		*this = TT_DECISION
+	case "fork":
+		*this = TT_FORK_JOIN
+	case "join":
+		*this = TT_JOIN
+	case "subworkflow":
+		*this = TT_SUB_WORKFLOW
+	default:
+		*this = TT_SIMPLE
+
+	}
+	return nil
+}
+
+func (this TaskType) IsSystemTask() bool {
+	return this < 50
+}
+
 //是否系统任务
 func IsSystemTask(t TaskType) bool {
 	return t < 50
@@ -80,16 +152,41 @@ func IsSystemTask(t TaskType) bool {
 //任务
 type Task struct {
 	Code      string            //任务唯一编码
-	Type      string            //任务类型，system、simple
+	Type      TaskType          //任务类型，system、simple
 	Label     string            //任务名称
-	InputMap  map[string]Value  //输入参数mapping key 参数key value 输入参数key
-	OutputMap map[string]string //输出参数mapping key out参数key，value 放入context中的参数key
+	InputMap  map[string]Value  `yaml:"inputs"`  //输入参数mapping key 参数key value 输入参数key
+	OutputMap map[string]string `yaml:"outputs"` //输出参数mapping key out参数key，value 放入context中的参数key
 	Retry     RetryConfig       //重试设置
 	Timeout   TimeoutConfig     //超时设置
 }
 
 //重试逻辑
 type RetryLogic byte
+
+const (
+	//固定delay时间后重试
+	RL_FIXED RetryLogic = 1
+	//指数级延时后重试 :  retryDelaySeconds * attempNo 之后重新调度任务
+	RL_EXPONENTIAL_BACKOFF RetryLogic = 2
+)
+
+func (this *RetryLogic) UnmarshalYAML(unmarshal func(v interface{}) error) error {
+	var text string
+	unmarshal(&text)
+	switch text {
+	case "fix":
+		*this = RL_FIXED
+	case "backoff":
+		*this = RL_EXPONENTIAL_BACKOFF
+	default:
+		*this = RL_FIXED
+
+	}
+	return nil
+}
+
+//超时策略
+type TimeoutPolicy byte
 
 const (
 	//重试
@@ -100,27 +197,33 @@ const (
 	TP_ALERT_ONLY TimeoutPolicy = 3
 )
 
-//超时策略
-type TimeoutPolicy byte
-
-const (
-	//固定delay时间后重试
-	RL_FIXED RetryLogic = 1
-	//指数级延时后重试 :  retryDelaySeconds * attempNo 之后重新调度任务
-	RL_EXPONENTIAL_BACKOFF RetryLogic = 2
-)
+func (this *TimeoutPolicy) UnmarshalYAML(unmarshal func(v interface{}) error) error {
+	var text string
+	unmarshal(&text)
+	switch text {
+	case "retry":
+		*this = TP_RETRY
+	case "timeoutWF":
+		*this = TP_TIME_OUT_WF
+	case "alert":
+		*this = TP_ALERT_ONLY
+	default:
+		*this = TP_RETRY
+	}
+	return nil
+}
 
 //超时设置
 type TimeoutConfig struct {
-	TimeoutSeconds         int           //超时时间（秒）
+	TimeoutSeconds         int           `yaml:"seconds"` //超时时间（秒）
 	Policy                 TimeoutPolicy //超时策略
-	ResponseTimeoutSeconds int           //如果大于0，则如果在此时间后未更新状态，则重新调度任务。
-	PollTimeoutSeconds     int           //拉取超时设置
+	ResponseTimeoutSeconds int           `yaml:"response"` //如果大于0，则如果在此时间后未更新状态，则重新调度任务。
+	PollTimeoutSeconds     int           `yaml:"poll"`     //拉取超时设置
 }
 
 //重试设置
 type RetryConfig struct {
 	Count       int        //重试次数
 	Logic       RetryLogic //策略
-	DelaySecond int        //重试延时
+	DelaySecond int        `yaml:"delay"` //重试延时
 }

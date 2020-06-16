@@ -1,0 +1,15 @@
+code: Test1
+label: 测试流程
+type: normal
+stages:
+   - code: aa
+     label: 第一步
+     type: normal
+     work:
+       code: t1
+       label: 任务1
+       type: fork
+       inputs: {p1: {refer: false,value: tp1}}
+       outputs: {p2: d2,p3: d3}
+       retry: {count: 10,logic: fix,delay: 100}
+       timeout: {seconds: 100,policy: retry,poll: 20,response: 40}
