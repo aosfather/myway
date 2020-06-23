@@ -61,7 +61,7 @@ func (this *LocalMetaManager) LoadJobInstance(instanceId string) *JobInstance {
 		if job.Code == "" {
 			return nil
 		}
-		instance := JobInstance{&job, this.jobContexts[instanceId], code, this}
+		instance := JobInstance{&job, this.jobContexts[instanceId], code.Stage, this}
 		return &instance
 	}
 
@@ -94,4 +94,8 @@ func (this *LocalMetaManager) SaveContext(instanceId string, context JobContext)
 		return
 	}
 	this.jobContexts[instanceId] = context
+}
+
+func (this *LocalMetaManager) UpdateTaskStatus(id string, status string, msg string) {
+
 }

@@ -23,3 +23,16 @@ func TestStageType_UnmarshalYAML(t *testing.T) {
 
 	t.Log(job)
 }
+
+func TestLocalMetaManager_AddJob(t *testing.T) {
+	files, e := ioutil.ReadFile("../example_process.yaml")
+	if e != nil {
+		t.Log(e.Error())
+	}
+	var job Job
+	yaml.Unmarshal(files, &job)
+	man := LocalMetaManager{}
+	man.Init()
+	man.AddJob(job)
+
+}
