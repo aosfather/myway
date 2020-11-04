@@ -18,12 +18,13 @@ type yamlConfig struct {
 	System SystemConfigurate      `yaml:"system"`
 }
 type ApplicationConfigurate struct {
-	ServerPath    string `yaml:"server"`
-	ApiPath       string `yaml:"api"`
-	UserPath      string `yaml:"user"`
-	RolePath      string `yaml:"role"`
-	AccessLogFile string `yaml:"access_log"`
-	logFile       string `yaml:"log"`
+	ServerPath    string   `yaml:"server"`
+	AppPath       string   `yaml:"app"`
+	UserPath      string   `yaml:"user"`
+	RolePath      string   `yaml:"role"`
+	AccessLogFile string   `yaml:"access_log"`
+	logFile       string   `yaml:"log"`
+	Eureka        []string `yaml:"eureka"`
 }
 
 //从文件装载信息

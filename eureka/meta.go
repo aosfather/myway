@@ -105,6 +105,11 @@ type Instance struct {
 
 	LeaseInfo LeaseInfo        `xml:"leaseInfo" json:"leaseInfo"`
 	Metadata  InstanceMetadata `xml:"metadata" json:"metadata"`
+	//V2 新增
+	IsCoordinatingDiscoveryServer string `xml:"isCoordinatingDiscoveryServer,omitempty" json:"isCoordinatingDiscoveryServer,omitempty"`
+	LastUpdatedTimestamp          string `xml:"lastUpdatedTimestamp,omitempty" json:"lastUpdatedTimestamp,omitempty"`
+	LastDirtyTimestamp            string `xml:"lastDirtyTimestamp,omitempty" json:"lastDirtyTimestamp,omitempty"`
+	ActionType                    string `xml:"actionType,omitempty" json:"actionType,omitempty"`
 
 	UniqueID func(i Instance) string `xml:"-" json:"-"`
 }

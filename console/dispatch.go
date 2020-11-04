@@ -67,15 +67,17 @@ func (this *ConsoleDispatch) ServeHTTP(ctx *fasthttp.RequestCtx) {
 
 //控制请求
 type ConsoleRequest struct {
-	Token string          `json:"access_token"`
-	Data  json.RawMessage `json:"data"`
+	Token   string          `json:"access_token"`
+	Version string          `json:"version"` //版本号
+	Data    json.RawMessage `json:"data"`
 }
 
 //控制结果
 type ConsoleResponse struct {
-	Status byte   `json:"status"`
-	Code   string `json:"code"`
-	Msg    string `json:"message"`
+	Status byte        `json:"status"`
+	Code   string      `json:"code"`
+	Msg    string      `json:"message"`
+	Data   interface{} `json:"data"`
 }
 
 //处理的hanler

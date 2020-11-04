@@ -25,7 +25,7 @@ var (
 	lock        sync.Mutex
 )
 
-func GetRuntimeContext(api *meta.Api) *runtimeContext {
+func GetRuntimeContext(api *meta.ApiMapper) *runtimeContext {
 	run := runtimeMaps[api.Key()]
 
 	if run == nil {
@@ -33,10 +33,10 @@ func GetRuntimeContext(api *meta.Api) *runtimeContext {
 		run = new(runtimeContext)
 		run.Owner = api
 		run.ID = api.Key()
-		run.QPS.Max = api.MaxQPS
+		//run.QPS.Max = api.MaxQPS
 		run.Init()
-		run.Lb = buildBalance(api.Cluster.Balance)
-		run.Lb.Config(api.Cluster.BalanceConfig)
+		//run.Lb = buildBalance(api.Cluster.Balance)
+		//run.Lb.Config(api.Cluster.BalanceConfig)
 		defer lock.Unlock()
 		if runtimeMaps[api.Key()] == nil {
 			runtimeMaps[api.Key()] = run
@@ -58,16 +58,17 @@ type runtimeContext struct {
 
 }
 
-func (this *runtimeContext) InitByApi(api *meta.Api) {
+func (this *runtimeContext) InitByApi(api *meta.ApiMapper) {
 	this.Init()
-	this.QPS.Max = api.MaxQPS
+	this.QPS.Max = 1000 //api.MaxQPS
 	this.ID = api.Key()
 	this.Owner = api
 	this.Status = CS_CLOSE
-	this.Lb = buildBalance(api.Cluster.Balance)
+	//this.Lb = buildBalance(api.Cluster.Balance)
 }
 
 func (this *runtimeContext) Init() {
+	this.QPS.Max = 1000
 	this.QPS.Init()
 }
 

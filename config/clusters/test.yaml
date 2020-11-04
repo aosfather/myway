@@ -1,6 +1,0 @@
-id: test
-name: "测试服务器"
-balance: 2
-balance_config: "test"
-servers:
-  - {id: 100 ,ip: "127.0.0.1",port: 8990,tag: "test,dev"}

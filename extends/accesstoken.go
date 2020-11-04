@@ -90,28 +90,28 @@ func (this *AccessTokenImp) Init(addr string, db int, expire int64, rmm core.Rol
 	this.rm.SetMetaManager(rmm)
 }
 
-func (this *AccessTokenImp) Before(api *meta.Api, ctx *fasthttp.RequestCtx) (bool, error) {
+func (this *AccessTokenImp) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error) {
 	//1、看api是否需要token
-	if api.AuthFilter == "access_token" {
-		fmt.Println("in this")
-		//2、看token是否有效
-		token := string(ctx.Request.PostArgs().Peek("access_token"))
-		fmt.Println("in this token")
-		t := this.tm.GetToken(token)
-		//3、看是否有权限调用
-		if t != nil {
-			m := make(map[string]string)
-			m["url"] = api.Url
-			if this.rm.Validate(t.Role, "url", m) {
-				return true, nil
-			}
-
-		}
-
-		ctx.Response.SetBodyString("no auth!")
-		return false, fmt.Errorf("no auth accssee the url!")
-
-	}
+	//if api.AuthFilter == "access_token" {
+	//	fmt.Println("in this")
+	//	//2、看token是否有效
+	//	token := string(ctx.Request.PostArgs().Peek("access_token"))
+	//	fmt.Println("in this token")
+	//	t := this.tm.GetToken(token)
+	//	//3、看是否有权限调用
+	//	if t != nil {
+	//		m := make(map[string]string)
+	//		m["url"] = api.Url
+	//		if this.rm.Validate(t.Role, "url", m) {
+	//			return true, nil
+	//		}
+	//
+	//	}
+	//
+	//	ctx.Response.SetBodyString("no auth!")
+	//	return false, fmt.Errorf("no auth accssee the url!")
+	//
+	//}
 
 	return true, nil
 }

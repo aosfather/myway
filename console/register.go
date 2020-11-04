@@ -2,7 +2,7 @@ package console
 
 import (
 	"encoding/json"
-	"github.com/aosfather/myway/meta"
+	//"github.com/aosfather/myway/meta"
 	"github.com/aosfather/myway/runtime"
 	"sync"
 )
@@ -32,17 +32,17 @@ func (this *RegisterHandle) Init(c *ConsoleDispatch, r *runtime.DispatchManager)
 func (this *RegisterHandle) addCluster(request *ConsoleRequest) ConsoleResponse {
 	info := clusterInfo{}
 	json.Unmarshal(request.Data, &info)
-	cluster := this.dm.GetCluster(info.Name)
-	if cluster != nil {
-		return ConsoleResponse{}
-	}
-	this.mutex.Lock()
-	c := &meta.ServerCluster{}
-	c.ID = info.ID
-	c.Name = info.Name
-	c.Balance = meta.LoadBalance(info.Balance)
-	c.BalanceConfig = info.BalanceConfig
-	this.dm.AddCluster(c)
+	//cluster := this.dm.GetCluster(info.Name)
+	//if cluster != nil {
+	//	return ConsoleResponse{}
+	//}
+	//this.mutex.Lock()
+	//c := &meta.ServerCluster{}
+	//c.ID = info.ID
+	//c.Name = info.Name
+	//c.Balance = meta.LoadBalance(info.Balance)
+	//c.BalanceConfig = info.BalanceConfig
+	//this.dm.AddCluster(c)
 	this.mutex.Unlock()
 
 	return ConsoleResponse{}
@@ -61,21 +61,21 @@ func (this *RegisterHandle) addServer(request *ConsoleRequest) ConsoleResponse {
 	info := serverInfo{}
 	json.Unmarshal(request.Data, &info)
 	this.mutex.Lock()
-	cluster := this.dm.GetCluster(info.Cluster)
-	if cluster != nil {
-		s := &meta.Server{}
-		s.ID = info.ID
-		s.Tag.Init(info.Tag)
-		s.Port = info.Port
-		s.Ip = info.Ip
-
-		cluster.Servers = append(cluster.Servers, s)
-	} else {
-		return ConsoleResponse{100, "404", "cluster not found!"}
-	}
+	//cluster := this.dm.GetCluster(info.Cluster)
+	//if cluster != nil {
+	//	s := &meta.Server{}
+	//	s.ID = info.ID
+	//	s.Tag.Init(info.Tag)
+	//	s.Port = info.Port
+	//	s.Ip = info.Ip
+	//
+	//	cluster.Servers = append(cluster.Servers, s)
+	//} else {
+	//	return ConsoleResponse{100, "404", "cluster not found!"}
+	//}
 	defer this.mutex.Unlock()
 
-	return ConsoleResponse{200, "200", "success!"}
+	return ConsoleResponse{200, "200", "success!", nil}
 }
 
 type apiInfo struct {
@@ -89,23 +89,23 @@ type apiInfo struct {
 //批量注册api
 func (this *RegisterHandle) addApi(request *ConsoleRequest) ConsoleResponse {
 	if request == nil {
-		return ConsoleResponse{100, "500", "the request is nil"}
+		return ConsoleResponse{100, "500", "the request is nil", nil}
 	}
 	info := &apiInfo{}
 	json.Unmarshal(request.Data, info)
 	this.mutex.Lock()
-	c := this.dm.GetCluster(info.Cluster)
-	if c != nil {
-		api := meta.Api{}
-		api.Url = info.Url
-		api.NameSpace = info.NameSpace
-		api.ServerUrl = info.ServerUrl
-		api.MaxQPS = info.MaxQPS
-		api.Cluster = c
-		this.dm.AddApi("", "", &api)
-
-	} else {
-		return ConsoleResponse{100, "404", "cluster not found!"}
-	}
-	return ConsoleResponse{200, "200", "success!"}
+	//c := this.dm.GetCluster(info.Cluster)
+	//if c != nil {
+	//	//api := meta.Api{}
+	//	//api.Url = info.Url
+	//	//api.NameSpace = info.NameSpace
+	//	//api.ServerUrl = info.ServerUrl
+	//	//api.MaxQPS = info.MaxQPS
+	//	//api.Cluster = c
+	//	//this.dm.AddApi("", "", &api)
+	//
+	//} else {
+	//	return ConsoleResponse{100, "404", "cluster not found!"}
+	//}
+	return ConsoleResponse{200, "200", "success!", nil}
 }

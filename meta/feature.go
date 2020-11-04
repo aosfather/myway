@@ -17,9 +17,14 @@ const (
 type LoadBalance int32
 
 const (
+	//直接调用，无需要负载均衡
+	LBDirect LoadBalance = -1
+	//随机
 	LBRoundRobin LoadBalance = 0
-	LBIPHash     LoadBalance = 1
-	LBTag        LoadBalance = 2
+	//hash
+	LBIPHash LoadBalance = 1
+	//根据tag
+	LBTag LoadBalance = 2
 )
 
 /**

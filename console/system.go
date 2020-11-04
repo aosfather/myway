@@ -32,7 +32,7 @@ func (this *SystemHandle) shutdown(request *ConsoleRequest) ConsoleResponse {
 		this.App.ShutdownNotify()
 	}
 	defer os.Exit(0)
-	return ConsoleResponse{1, "001", "exit by you!"}
+	return ConsoleResponse{1, "001", "exit by you!", nil}
 }
 
 func (this *SystemHandle) reload(request *ConsoleRequest) ConsoleResponse {
@@ -42,15 +42,15 @@ func (this *SystemHandle) reload(request *ConsoleRequest) ConsoleResponse {
 	if this.App != nil {
 		if req.Tag == "api" {
 			this.App.ReloadApis()
-			return ConsoleResponse{1, "001", "reload apis config success"}
+			return ConsoleResponse{1, "001", "reload apis config success", nil}
 		} else if req.Tag == "auth" {
 			this.App.ReloadAuth()
-			return ConsoleResponse{1, "001", "reload auth config success"}
+			return ConsoleResponse{1, "001", "reload auth config success", nil}
 		}
 		//默认加载config
 		this.App.ReloadConfig()
 	}
-	return ConsoleResponse{1, "001", "reload config success"}
+	return ConsoleResponse{1, "001", "reload config success", nil}
 }
 
 func (this *SystemHandle) restart(request *ConsoleRequest) ConsoleResponse {

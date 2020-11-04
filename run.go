@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aosfather/myway/console"
+	"github.com/aosfather/myway/eureka"
 	"github.com/aosfather/myway/extends"
+	"github.com/aosfather/myway/meta"
 	"github.com/aosfather/myway/runtime"
+	"strings"
 )
 
 //token生成的插件
@@ -66,11 +70,30 @@ func (this *application) init() {
 
 //加载api的定义
 func (this *application) loadApisConfig(config ApplicationConfigurate) {
-	//从配置中加载cluster的定义
-	LoadClusterFromFile(config.ServerPath, this.dispatch)
-	//从api的定义中加载代理的api
-	LoadAPIFromFile(config.ApiPath, this.dispatch)
+	//加载配置文件的api定义
+	LoadApplicationFromFile(config.AppPath, this.dispatch)
 
+	//load form eureka
+	c := eureka.NewConn(config.Eureka...)
+	appmap, _ := c.GetApps()
+	for k, v := range appmap {
+		fmt.Println("c:", k)
+		this.dispatch.AddApplication(this.eurekaToApplication(v))
+	}
+
+}
+
+func (this *application) eurekaToApplication(app *eureka.Application) *meta.ApplicationMapper {
+	mapper := meta.ApplicationMapper{App: strings.ToLower(app.Name), Host: app.Name}
+	cluster := meta.ServerCluster{}
+	mapper.Cluster = &cluster
+	for index, instance := range app.Instances {
+		fmt.Println(instance.VipAddress)
+		fmt.Println(*instance)
+		server := &meta.Server{ID: int64(index), Ip: instance.IPAddr, Port: instance.Port, MaxQPS: 1000}
+		cluster.AddServer(server)
+	}
+	return &mapper
 }
 
 //初始化管理控制台

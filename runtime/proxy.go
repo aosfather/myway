@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -33,16 +34,16 @@ type HttpProxy struct {
 func (this *HttpProxy) Init(dispatch *DispatchManager) {
 	this.dispatch = dispatch
 	//加入默认的集群，静态资源，本地插件
-	if this.dispatch != nil {
-		cstatic := meta.ServerCluster{}
-		cstatic.ID = "-"
-		cstatic.Name = "-"
-		this.dispatch.AddCluster(&cstatic)
-		cthis := meta.ServerCluster{}
-		cthis.ID = "."
-		cthis.Name = "."
-		this.dispatch.AddCluster(&cthis)
-	}
+	//if this.dispatch != nil {
+	//	cstatic := meta.ServerCluster{}
+	//	cstatic.ID = "-"
+	//	cstatic.Name = "-"
+	//	this.dispatch.AddCluster(&cstatic)
+	//	cthis := meta.ServerCluster{}
+	//	cthis.ID = "."
+	//	cthis.Name = "."
+	//	this.dispatch.AddCluster(&cthis)
+	//}
 	this.client = NewFastHTTPClientOption(DefaultHTTPOption())
 	this.intercepters = append(this.intercepters, &AccessLogIntercepter{})
 	this.intercepters = append(this.intercepters, &LimitIntercepter{})
@@ -84,33 +85,53 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	url := string(ctx.Request.URI().RequestURI())
 	domain := string(ctx.Request.Header.Host())
 	//通过dispatch，获取api的定义
+	fmt.Println(domain, "=>", url)
 	api := this.dispatch.GetApi(domain, url)
 
 	if api == nil { //不存在的时候的处理
-		ctx.Response.SetBodyString("the url not found!")
-		return
+		//看是否是应用映射
+
+		appname := url[1:]
+
+		end := strings.Index(appname, "/")
+		var targetUri string
+		if end > 0 {
+			targetUri = appname[end:]
+			appname = appname[0:end]
+		}
+
+		appmapper := this.dispatch.GetApplication(appname)
+		if appmapper == nil {
+			ctx.Response.SetBodyString("the url not found!")
+			return
+		}
+		fmt.Println(targetUri)
+		fmt.Println(appname)
+		api = &meta.ApiMapper{Url: url, TargetUrl: targetUri}
+		appmapper.AddMapper(api)
+		this.dispatch.AddApi("", "", api)
 	}
 	//根据api定义内容，进行 auth、access、等等的处理
 	var res *fasthttp.Response
 	if this.beforeCall(api, ctx) {
 		//如果 cluster为"-",表示静态资源
-		if api.Cluster.ID == Cluster_Static {
-			res = this.getStaticResource(&ctx.Request, api.ServerUrl)
-		} else if api.Cluster.ID == Cluster_This {
-			//内部插件接口处理
-			res = this.plugins.callPlugin(api.ServerUrl, &ctx.Request)
+		//if api.Cluster.ID == Cluster_Static {
+		//	res = this.getStaticResource(&ctx.Request, api.ServerUrl)
+		//} else if api.Cluster.ID == Cluster_This {
+		//	//内部插件接口处理
+		//	res = this.plugins.callPlugin(api.ServerUrl, &ctx.Request)
+		//} else {
+		//根据分流和loadbalance选取server
+		server := this.loadBalance(api, ctx)
+		if server == nil {
+			ctx.Response.SetBodyString("the server not exist!")
+			return
 		} else {
-			//根据分流和loadbalance选取server
-			server := this.loadBalance(api, ctx)
-			if server == nil {
-				ctx.Response.SetBodyString("the server not exist!")
-				return
-			}
-
 			//目标server调用
-			res = this.call(ctx.Request, server, api.ServerUrl)
-
+			res = this.call(ctx.Request, server.Addr(), api.TargetUrl)
 		}
+
+		//}
 	}
 
 	//完成拦截器处理,处理服务器的返回值
@@ -124,7 +145,7 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 
 }
 
-func (this *HttpProxy) beforeCall(api *meta.Api, ctx *fasthttp.RequestCtx) bool {
+func (this *HttpProxy) beforeCall(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) bool {
 	for _, intercepter := range this.intercepters {
 		ok, err := intercepter.Before(api, ctx)
 		if !ok {
@@ -136,19 +157,19 @@ func (this *HttpProxy) beforeCall(api *meta.Api, ctx *fasthttp.RequestCtx) bool 
 	return true
 }
 
-func (this *HttpProxy) afterCall(api *meta.Api, id uint64, res *fasthttp.Response) {
-	for _, intercepter := range this.intercepters {
-		ok, err := intercepter.After(api, id, res)
-		if !ok {
-			err.Error()
-			//TODO 错误处理
-
-		}
-	}
+func (this *HttpProxy) afterCall(api *meta.ApiMapper, id uint64, res *fasthttp.Response) {
+	//for _, intercepter := range this.intercepters {
+	//	ok, err := intercepter.After(api, id, res)
+	//	if !ok {
+	//		err.Error()
+	//		//TODO 错误处理
+	//
+	//	}
+	//}
 
 }
 
-func (this *HttpProxy) releaseCall(api *meta.Api, ctx *fasthttp.RequestCtx) {
+func (this *HttpProxy) releaseCall(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) {
 
 	for _, intercepter := range this.intercepters {
 		ok, err := intercepter.Release(api, ctx)
@@ -159,7 +180,7 @@ func (this *HttpProxy) releaseCall(api *meta.Api, ctx *fasthttp.RequestCtx) {
 }
 
 //负载均衡
-func (this *HttpProxy) loadBalance(api *meta.Api, ctx *fasthttp.RequestCtx) *meta.Server {
+func (this *HttpProxy) loadBalance(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) *meta.Server {
 
 	if api != nil {
 		context := GetRuntimeContext(api)
@@ -167,16 +188,19 @@ func (this *HttpProxy) loadBalance(api *meta.Api, ctx *fasthttp.RequestCtx) *met
 		log.Println(context)
 		if context.Lb != nil {
 			log.Print(context.Lb)
-			return context.Lb.Select(ctx, &api.Cluster.Servers)
+			return context.Lb.Select(ctx, &api.GetCluster().Servers)
 		}
 		//没有负载均衡设置，走random
-		lservers := len(api.Cluster.Servers)
+		if api.GetCluster() == nil {
+			return nil
+		}
+		lservers := len(api.GetCluster().Servers)
 		if lservers > 1 {
 			rand.Seed(time.Now().UnixNano())
 			index := rand.Intn(lservers)
-			return api.Cluster.Servers[index]
+			return api.GetCluster().Servers[index]
 		} else if lservers > 0 {
-			return api.Cluster.Servers[0]
+			return api.GetCluster().Servers[0]
 		}
 		//}
 
@@ -185,23 +209,26 @@ func (this *HttpProxy) loadBalance(api *meta.Api, ctx *fasthttp.RequestCtx) *met
 	return nil
 }
 
-func (this *HttpProxy) call(req fasthttp.Request, server *meta.Server, url string) *fasthttp.Response {
+func (this *HttpProxy) call(req fasthttp.Request, addr, url string) *fasthttp.Response {
 	//需要进入重试处理
 	r := copyRequest(&req)
 	r.SetRequestURI("/" + url)
-	res, err := this.client.Do(r, server.Addr(), nil)
+	r.SetHost(addr)
+	res, err := this.client.Do(r, addr, nil)
 	if err != nil {
 		fmt.Println(err.Error())
 		r := fasthttp.Response{}
 		r.SetBodyString("the server error! used default return!")
 		return &r
 	}
+
 	defer fasthttp.ReleaseRequest(r)
 	return res
 }
 
 func (this *HttpProxy) copyResponse(source *fasthttp.Response, target *fasthttp.Response) {
 	if source != nil {
+		source.Header.Del("Transfer-Encoding")
 		source.CopyTo(target)
 		defer fasthttp.ReleaseResponse(source)
 	}

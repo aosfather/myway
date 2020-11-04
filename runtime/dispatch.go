@@ -27,22 +27,22 @@ func (this *SimpleDispatch) GetUrl(url string) interface{} {
 }
 
 type DispatchManager struct {
-	domainNode  map[string]*node               //特定域名下的node
-	defaultNode *node                          //默认
-	clusterMap  map[string]*meta.ServerCluster //集群列表
-	apiMap      map[string]*meta.Api           //api列表
-	env         meta.Env                       //环境列表
+	domainNode  map[string]*node                   //特定域名下的node
+	defaultNode *node                              //默认
+	clusterMap  map[string]*meta.ApplicationMapper //集群列表
+	apiMap      map[string]*meta.ApiMapper         //api列表
+	env         meta.Env                           //环境列表
 }
 
 func (this *DispatchManager) Init() {
 	this.domainNode = make(map[string]*node)
-	this.clusterMap = make(map[string]*meta.ServerCluster)
-	this.apiMap = make(map[string]*meta.Api)
+	this.clusterMap = make(map[string]*meta.ApplicationMapper)
+	this.apiMap = make(map[string]*meta.ApiMapper)
 	this.defaultNode = &node{}
 }
 
 //根据域名和url获取对应的API
-func (this *DispatchManager) GetApi(domain, url string) *meta.Api {
+func (this *DispatchManager) GetApi(domain, url string) *meta.ApiMapper {
 	node := this.domainNode[domain]
 	if node == nil {
 		node = this.defaultNode
