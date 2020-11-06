@@ -21,16 +21,17 @@ const (
 )
 
 var (
-	runtimeMaps map[string]*runtimeContext = make(map[string]*runtimeContext)
+	runtimeMaps map[string]*RuntimeValve = make(map[string]*RuntimeValve)
 	lock        sync.Mutex
 )
 
-func GetRuntimeContext(api *meta.ApiMapper) *runtimeContext {
+//获取运行控制阀
+func GetRuntimeValve(api *meta.ApiMapper) *RuntimeValve {
 	run := runtimeMaps[api.Key()]
 
 	if run == nil {
 		lock.Lock()
-		run = new(runtimeContext)
+		run = new(RuntimeValve)
 		run.Owner = api
 		run.ID = api.Key()
 		//run.QPS.Max = api.MaxQPS
@@ -48,8 +49,8 @@ func GetRuntimeContext(api *meta.ApiMapper) *runtimeContext {
 	return run
 }
 
-//运行时上下文
-type runtimeContext struct {
+//运行时控制阀
+type RuntimeValve struct {
 	ID     string       //
 	Owner  interface{}  //所属对象
 	QPS    QPSCount     //访问量
@@ -58,7 +59,7 @@ type runtimeContext struct {
 
 }
 
-func (this *runtimeContext) InitByApi(api *meta.ApiMapper) {
+func (this *RuntimeValve) InitByApi(api *meta.ApiMapper) {
 	this.Init()
 	this.QPS.Max = 1000 //api.MaxQPS
 	this.ID = api.Key()
@@ -67,7 +68,7 @@ func (this *runtimeContext) InitByApi(api *meta.ApiMapper) {
 	//this.Lb = buildBalance(api.Cluster.Balance)
 }
 
-func (this *runtimeContext) Init() {
+func (this *RuntimeValve) Init() {
 	this.QPS.Max = 1000
 	this.QPS.Init()
 }

@@ -8,25 +8,28 @@ import (
 	"time"
 )
 
+//运行上下文
+type RunTimeContext map[string]interface{}
+
 /**
   拦截器接口
 */
 
 type Intercepter interface {
-	Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error)         //调用之前
-	After(api *meta.ApiMapper, id uint64, ctx *fasthttp.Response) (bool, error) //调用完成之后
-	Release(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error)        //网关完成返回处理完之后释放资源
+	Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx, context RunTimeContext) (bool, error) //调用之前
+	After(api *meta.ApiMapper, ctx *fasthttp.Response, context RunTimeContext) (bool, error)    //调用完成之后
+	Release(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error)                        //网关完成返回处理完之后释放资源
 }
 
 //抽象拦截器
 type BaseIntercepter struct {
 }
 
-func (this *BaseIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error) {
+func (this *BaseIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx, context RunTimeContext) (bool, error) {
 	return true, nil
 }
 
-func (this *BaseIntercepter) After(api *meta.ApiMapper, id uint64, ctx *fasthttp.Response) (bool, error) {
+func (this *BaseIntercepter) After(api *meta.ApiMapper, ctx *fasthttp.Response, context RunTimeContext) (bool, error) {
 	return true, nil
 }
 
@@ -39,7 +42,7 @@ type AuthIntercepter struct {
 	BaseIntercepter
 }
 
-func (this *AuthIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error) {
+func (this *AuthIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx, context RunTimeContext) (bool, error) {
 	return true, nil
 }
 
@@ -48,9 +51,9 @@ type LimitIntercepter struct {
 	BaseIntercepter
 }
 
-func (this *LimitIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error) {
-	context := GetRuntimeContext(api)
-	if context.QPS.Incr() {
+func (this *LimitIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx, context RunTimeContext) (bool, error) {
+	c := GetRuntimeValve(api)
+	if c.QPS.Incr() {
 		return true, nil
 	}
 	ctx.Response.SetBodyString("the api limit max qps!")
@@ -134,24 +137,20 @@ func (this *LimitIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestC
 //访问日志
 type AccessLogIntercepter struct {
 	BaseIntercepter
-	requests map[uint64]int64
 }
 
-func (this *AccessLogIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error) {
+func (this *AccessLogIntercepter) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx, context RunTimeContext) (bool, error) {
 	log.Println("call" + api.Url + fmt.Sprintf("%d", ctx.ID()))
-	if this.requests == nil {
-		this.requests = make(map[uint64]int64)
-	}
-
-	this.requests[ctx.ID()] = time.Now().UnixNano()
+	context["__begin__"] = time.Now().UnixNano()
 	return true, nil
 }
 
-func (this *AccessLogIntercepter) After(api *meta.ApiMapper, id uint64, ctx *fasthttp.Response) (bool, error) {
+func (this *AccessLogIntercepter) After(api *meta.ApiMapper, ctx *fasthttp.Response, context RunTimeContext) (bool, error) {
 	thenow := time.Now().UnixNano()
-	used := thenow - this.requests[id]
+	context["__end__"] = thenow
+	start := context["__begin__"].(int64)
+	used := thenow - start
+	context["__used__"] = used
 	log.Println("after call " + api.Url + fmt.Sprintf(" used:%d ms", (time.Duration(used)/time.Millisecond)))
-	//删除id
-	delete(this.requests, id)
 	return true, nil
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestRuntimeContext_QPSCount(t *testing.T) {
-	context := runtimeContext{}
+	context := RuntimeValve{}
 	context.Init()
 	context.QPS.Max = 50
 	for i := 0; i < 200; i++ {

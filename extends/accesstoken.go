@@ -90,7 +90,7 @@ func (this *AccessTokenImp) Init(addr string, db int, expire int64, rmm core.Rol
 	this.rm.SetMetaManager(rmm)
 }
 
-func (this *AccessTokenImp) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) (bool, error) {
+func (this *AccessTokenImp) Before(api *meta.ApiMapper, ctx *fasthttp.RequestCtx, context runtime.RunTimeContext) (bool, error) {
 	//1、看api是否需要token
 	//if api.AuthFilter == "access_token" {
 	//	fmt.Println("in this")

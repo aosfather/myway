@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"github.com/aosfather/myway/meta"
 	"github.com/valyala/fasthttp"
-	"io/ioutil"
 	"log"
 	"math/rand"
-	"os"
 	"strings"
 	"time"
 )
@@ -33,17 +31,6 @@ type HttpProxy struct {
 
 func (this *HttpProxy) Init(dispatch *DispatchManager) {
 	this.dispatch = dispatch
-	//加入默认的集群，静态资源，本地插件
-	//if this.dispatch != nil {
-	//	cstatic := meta.ServerCluster{}
-	//	cstatic.ID = "-"
-	//	cstatic.Name = "-"
-	//	this.dispatch.AddCluster(&cstatic)
-	//	cthis := meta.ServerCluster{}
-	//	cthis.ID = "."
-	//	cthis.Name = "."
-	//	this.dispatch.AddCluster(&cthis)
-	//}
 	this.client = NewFastHTTPClientOption(DefaultHTTPOption())
 	this.intercepters = append(this.intercepters, &AccessLogIntercepter{})
 	this.intercepters = append(this.intercepters, &LimitIntercepter{})
@@ -80,19 +67,58 @@ func (this *HttpProxy) Start() {
 
 }
 
+/**
+  运作流程
+   1、获取绑定的url对应的API
+   2、如果没有，查找映射的app（注册中心模式）
+   3、
+*/
 func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	//获取访问的url
 	url := string(ctx.Request.URI().RequestURI())
 	domain := string(ctx.Request.Header.Host())
 	//通过dispatch，获取api的定义
 	fmt.Println(domain, "=>", url)
+	api := this.getApi(domain, url) //this.dispatch.GetApi(domain, url)
+	if api == nil {
+		ctx.Response.SetBodyString("the url not found!")
+		return
+	}
+
+	//根据api定义内容，进行 auth、access、等等的处理
+	var res *fasthttp.Response
+	context := make(RunTimeContext)
+
+	if this.beforeCall(api, ctx, context) {
+		//根据分流和loadbalance选取server
+		server := this.loadBalance(api, ctx)
+		if server == nil {
+			ctx.Response.SetBodyString("the server not exist!")
+			return
+		} else {
+			req := ctx.Request
+			//目标server调用
+			nreq := this.inputFilter(&req, server.Addr(), api, context)
+			res = this.proxyTarget(nreq)
+		}
+
+	}
+	//完成拦截器处理,处理服务器的返回值
+	this.afterCall(api, res, context)
+	//返回数据,回写response
+	this.outputFilter(res, &ctx.Response, api, context)
+
+	//defer,release调用
+	defer this.releaseCall(api, ctx)
+
+}
+
+func (this *HttpProxy) getApi(domain, url string) *meta.ApiMapper {
 	api := this.dispatch.GetApi(domain, url)
 
 	if api == nil { //不存在的时候的处理
 		//看是否是应用映射
-
 		appname := url[1:]
-
 		end := strings.Index(appname, "/")
 		var targetUri string
 		if end > 0 {
@@ -101,53 +127,20 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 		}
 
 		appmapper := this.dispatch.GetApplication(appname)
-		if appmapper == nil {
-			ctx.Response.SetBodyString("the url not found!")
-			return
+		if appmapper != nil {
+			api = &meta.ApiMapper{Url: url, TargetUrl: targetUri}
+			appmapper.AddMapper(api)
+			this.dispatch.AddApi("", "", api)
 		}
-		fmt.Println(targetUri)
-		fmt.Println(appname)
-		api = &meta.ApiMapper{Url: url, TargetUrl: targetUri}
-		appmapper.AddMapper(api)
-		this.dispatch.AddApi("", "", api)
-	}
-	//根据api定义内容，进行 auth、access、等等的处理
-	var res *fasthttp.Response
-	if this.beforeCall(api, ctx) {
-		//如果 cluster为"-",表示静态资源
-		//if api.Cluster.ID == Cluster_Static {
-		//	res = this.getStaticResource(&ctx.Request, api.ServerUrl)
-		//} else if api.Cluster.ID == Cluster_This {
-		//	//内部插件接口处理
-		//	res = this.plugins.callPlugin(api.ServerUrl, &ctx.Request)
-		//} else {
-		//根据分流和loadbalance选取server
-		server := this.loadBalance(api, ctx)
-		if server == nil {
-			ctx.Response.SetBodyString("the server not exist!")
-			return
-		} else {
-			//目标server调用
-			res = this.call(ctx.Request, server.Addr(), api.TargetUrl)
-		}
-
-		//}
 	}
 
-	//完成拦截器处理,处理服务器的返回值
-	this.afterCall(api, ctx.ID(), res)
-
-	//返回数据,回写response
-	this.copyResponse(res, &ctx.Response)
-
-	//defer,release调用
-	defer this.releaseCall(api, ctx)
-
+	return api
 }
 
-func (this *HttpProxy) beforeCall(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) bool {
+func (this *HttpProxy) beforeCall(api *meta.ApiMapper, ctx *fasthttp.RequestCtx, context RunTimeContext) bool {
+
 	for _, intercepter := range this.intercepters {
-		ok, err := intercepter.Before(api, ctx)
+		ok, err := intercepter.Before(api, ctx, context)
 		if !ok {
 			err.Error()
 			return false
@@ -157,15 +150,15 @@ func (this *HttpProxy) beforeCall(api *meta.ApiMapper, ctx *fasthttp.RequestCtx)
 	return true
 }
 
-func (this *HttpProxy) afterCall(api *meta.ApiMapper, id uint64, res *fasthttp.Response) {
-	//for _, intercepter := range this.intercepters {
-	//	ok, err := intercepter.After(api, id, res)
-	//	if !ok {
-	//		err.Error()
-	//		//TODO 错误处理
-	//
-	//	}
-	//}
+func (this *HttpProxy) afterCall(api *meta.ApiMapper, res *fasthttp.Response, context RunTimeContext) {
+	for _, intercepter := range this.intercepters {
+		ok, err := intercepter.After(api, res, context)
+		if !ok {
+			err.Error()
+			//TODO 错误处理
+
+		}
+	}
 
 }
 
@@ -183,7 +176,7 @@ func (this *HttpProxy) releaseCall(api *meta.ApiMapper, ctx *fasthttp.RequestCtx
 func (this *HttpProxy) loadBalance(api *meta.ApiMapper, ctx *fasthttp.RequestCtx) *meta.Server {
 
 	if api != nil {
-		context := GetRuntimeContext(api)
+		context := GetRuntimeValve(api)
 		//if context.QPS.Incr() {
 		log.Println(context)
 		if context.Lb != nil {
@@ -209,12 +202,21 @@ func (this *HttpProxy) loadBalance(api *meta.ApiMapper, ctx *fasthttp.RequestCtx
 	return nil
 }
 
-func (this *HttpProxy) call(req fasthttp.Request, addr, url string) *fasthttp.Response {
+func (this *HttpProxy) inputFilter(req *fasthttp.Request, addr string, api *meta.ApiMapper, context RunTimeContext) *fasthttp.Request {
+	newreq := fasthttp.AcquireRequest()
+	newreq.Reset()
+	req.CopyTo(newreq)
 	//需要进入重试处理
-	r := copyRequest(&req)
-	r.SetRequestURI("/" + url)
-	r.SetHost(addr)
-	res, err := this.client.Do(r, addr, nil)
+	newreq.SetRequestURI("/" + api.TargetUrl)
+	newreq.SetHost(addr)
+	//进行filter处理
+
+	return newreq
+}
+
+//调用目标服务
+func (this *HttpProxy) proxyTarget(req *fasthttp.Request) *fasthttp.Response {
+	res, err := this.client.Do(req, string(req.Host()), nil)
 	if err != nil {
 		fmt.Println(err.Error())
 		r := fasthttp.Response{}
@@ -222,56 +224,15 @@ func (this *HttpProxy) call(req fasthttp.Request, addr, url string) *fasthttp.Re
 		return &r
 	}
 
-	defer fasthttp.ReleaseRequest(r)
+	defer fasthttp.ReleaseRequest(req)
 	return res
 }
 
-func (this *HttpProxy) copyResponse(source *fasthttp.Response, target *fasthttp.Response) {
+//输出结果处理
+func (this *HttpProxy) outputFilter(source, target *fasthttp.Response, api *meta.ApiMapper, context RunTimeContext) {
 	if source != nil {
 		source.Header.Del("Transfer-Encoding")
 		source.CopyTo(target)
 		defer fasthttp.ReleaseResponse(source)
 	}
-
-}
-
-func copyRequest(req *fasthttp.Request) *fasthttp.Request {
-	newreq := fasthttp.AcquireRequest()
-	newreq.Reset()
-	req.CopyTo(newreq)
-	return newreq
-}
-
-//处理静态资源
-func (this *HttpProxy) getStaticResource(req *fasthttp.Request, url string) *fasthttp.Response {
-	res := fasthttp.Response{}
-	//完成从指定的静态目录中加载对应的url
-	if this.staticRoot != "" {
-
-		realurl := this.staticRoot + "/" + url
-		if PathExists(realurl) { //是否存在
-			data, err := ioutil.ReadFile(realurl)
-			if err == nil {
-				res.SetBody(data)
-			}
-
-		}
-
-	}
-
-	//如果不存在构建通用错误
-	res.SetBodyString("The url not exist!")
-	return &res
-
-}
-
-func PathExists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return false
 }
