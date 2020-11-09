@@ -24,3 +24,27 @@ type Env struct {
 	Description string //环境描述
 	Domain      string //环境对应的域名，可选
 }
+
+//常用的请求头
+const (
+	UserAgent               = "User-Agent"
+	ContentType             = "Content-Type"
+	ContentLength           = "Content-Length"
+	Authorization           = "Authorization"
+	ContentEncoding         = "Content-Encoding"
+	Accept                  = "Accept"
+	AcceptEncoding          = "Accept-Encoding"
+	StrictTransportSecurity = "Strict-Transport-Security"
+	CacheControl            = "Cache-Control"
+	Pragma                  = "Pragma"
+	Expires                 = "Expires"
+	Connection              = "Connection"
+	XRealIP                 = "X-Real-IP"
+	XForwardFor             = "X-Forwarded-For"
+)
+
+//常用的content type
+const (
+	ApplicationJSON = "application/json"
+	ApplicationXML  = "application/xml"
+)
