@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/aosfather/myway/filter"
 	"github.com/aosfather/myway/meta"
 	"github.com/aosfather/myway/runtime"
 	"gopkg.in/yaml.v2"
@@ -19,7 +20,8 @@ type Application struct {
 	Module  string //虚拟模块
 	Host    string //对应主机
 	Prefix  string
-	Apis    []ApplicationApi //接口列表
+	Apis    []ApplicationApi        //接口列表
+	Chains  []filter.FilterChainDef //处理链定义
 }
 
 func (this *Application) ToApplicationMapper() *meta.ApplicationMapper {
@@ -30,8 +32,16 @@ func (this *Application) ToApplicationMapper() *meta.ApplicationMapper {
 	cluster := meta.ServerCluster{}
 	cluster.AddServer(&meta.Server{ID: 1, Ip: host, Port: port, MaxQPS: 1000})
 	mapper.Cluster = &cluster
+	//加入filter定义
+	for _, chainDef := range this.Chains {
+		mapper.AddFilterChain(chainDef)
+	}
+	//加入api定义
 	for _, apidefine := range this.Apis {
-		mapper.AddMapper(apidefine.ToApi(this))
+		api := apidefine.ToApi(this)
+		api.Input = mapper.GetFilterChain(apidefine.Input)
+		api.Output = mapper.GetFilterChain(apidefine.Output)
+		mapper.AddMapper(api)
 	}
 
 	return &mapper
@@ -76,6 +86,8 @@ type ApplicationApi struct {
 	TargetUrl string `yaml:"targetUrl"` //目标地址
 	Label     string //接口标题
 	Desc      string //描述
+	Input     string //输入filter
+	Output    string //输出filter
 }
 
 func (this *ApplicationApi) ToApi(app *Application) *meta.ApiMapper {
@@ -84,6 +96,7 @@ func (this *ApplicationApi) ToApi(app *Application) *meta.ApiMapper {
 	api.TargetUrl = app.Prefix + this.TargetUrl
 	fmt.Println(this)
 	fmt.Println(api)
+
 	return &api
 }
 

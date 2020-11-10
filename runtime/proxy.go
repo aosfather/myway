@@ -79,6 +79,7 @@ func (this *HttpProxy) ServeHTTP(ctx *fasthttp.RequestCtx) {
 	domain := string(ctx.Request.Header.Host())
 	//通过dispatch，获取api的定义
 	fmt.Println(domain, "=>", url)
+	fmt.Println(string(ctx.Request.URI().QueryString()))
 	api := this.getApi(domain, url) //this.dispatch.GetApi(domain, url)
 	if api == nil {
 		ctx.Response.SetBodyString("the url not found!")
@@ -206,17 +207,33 @@ func (this *HttpProxy) inputFilter(req *fasthttp.Request, addr string, api *meta
 	newreq := fasthttp.AcquireRequest()
 	newreq.Reset()
 	req.CopyTo(newreq)
+
 	//需要进入重试处理
+	newreq.URI().Reset()
 	newreq.SetRequestURI("/" + api.TargetUrl)
 	newreq.SetHost(addr)
-	//进行filter处理
 
+	//GET请求复制QUERY 参数
+	if string(newreq.Header.Method()) == "GET" {
+		req.URI().QueryArgs().CopyTo(newreq.URI().QueryArgs())
+	}
+
+	//进行filter处理
+	if api.Input != nil {
+		api.Input.DoFilter(&RequestWrap{req}, &RequestWrap{newreq}, context)
+		if string(newreq.Header.ContentType()) == "application/x-www-form-urlencoded" && newreq.PostArgs().String() != "" {
+			newreq.SetBody([]byte(req.PostArgs().String()))
+		}
+	}
 	return newreq
 }
 
 //调用目标服务
 func (this *HttpProxy) proxyTarget(req *fasthttp.Request) *fasthttp.Response {
+
+	fmt.Println(req)
 	res, err := this.client.Do(req, string(req.Host()), nil)
+	fmt.Println(res)
 	if err != nil {
 		fmt.Println(err.Error())
 		r := fasthttp.Response{}
@@ -234,5 +251,8 @@ func (this *HttpProxy) outputFilter(source, target *fasthttp.Response, api *meta
 		source.Header.Del("Transfer-Encoding")
 		source.CopyTo(target)
 		defer fasthttp.ReleaseResponse(source)
+		if api.Output != nil {
+			api.Output.DoFilter(&ResponseWrap{source}, &ResponseWrap{target}, context)
+		}
 	}
 }

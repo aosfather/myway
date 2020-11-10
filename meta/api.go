@@ -1,25 +1,25 @@
 package meta
 
 //api的描述
-type Api struct {
-	NameSpace      string          //所在的模块，用于空间的管理
-	Url            string          //api的url
-	Desc           string          //描述
-	Method         []HttpMethod    //允许的访问方法
-	Cluster        *ServerCluster  //对应的集群
-	Access         IPAccessControl //ip访问控制
-	ServerUrl      string          //服务对应url
-	Domain         string          //对应的域名
-	Status         Status
-	AuthFilter     string
-	MatchRule      MatchRule //url匹配规则
-	CircuitBreaker *CircuitBreaker
-	MaxQPS         int64
-}
-
-func (this *Api) Key() string {
-	return this.NameSpace + "/" + this.Url
-}
+//type Api struct {
+//	NameSpace      string          //所在的模块，用于空间的管理
+//	Url            string          //api的url
+//	Desc           string          //描述
+//	Method         []HttpMethod    //允许的访问方法
+//	Cluster        *ServerCluster  //对应的集群
+//	Access         IPAccessControl //ip访问控制
+//	ServerUrl      string          //服务对应url
+//	Domain         string          //对应的域名
+//	Status         Status
+//	AuthFilter     string
+//	MatchRule      MatchRule //url匹配规则
+//	CircuitBreaker *CircuitBreaker
+//	MaxQPS         int64
+//}
+//
+//func (this *Api) Key() string {
+//	return this.NameSpace + "/" + this.Url
+//}
 
 // 通用状态
 type Status byte

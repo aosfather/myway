@@ -22,7 +22,15 @@ func (this *testReader) GetBody() []byte {
 
 func TestFilterChain_DoFilter(t *testing.T) {
 	context := make(runtime.RunTimeContext)
-	tf := HeaderExtract{}
-	tf.DoFilter(nil, nil, context)
 	t.Log(context)
+}
+
+func TestFilterChain_factory(t *testing.T) {
+	context := make(runtime.RunTimeContext)
+	t.Log(context)
+	fdef := FilterDef{Filter: "header_remover", Parameters: []SourceTarget{SourceTarget{Source: "v"}}}
+	cdef := FilterChainDef{Name: "test", Filters: []FilterDef{fdef}}
+	c := Factory(cdef)
+	//c.DoFilter(nil,nil,context)
+	t.Log(c[0])
 }

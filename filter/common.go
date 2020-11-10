@@ -55,27 +55,3 @@ func (this *FilterChain) DoFilter(r EntityReader, w EntityWriter, context map[st
 		}
 	}
 }
-
-//filter管理器
-type FilterManager struct {
-	filters map[string]Filter
-}
-
-func (this *FilterManager) Init() {
-	this.filters = make(map[string]Filter)
-}
-
-func (this *FilterManager) Register(id string, f Filter) {
-	if f != nil {
-		this.filters[id] = f
-	}
-}
-
-func (this *FilterManager) CreateChain(ids ...string) FilterChain {
-	f := FilterChain{}
-	for _, n := range ids {
-		f = append(f, this.filters[n])
-	}
-
-	return f
-}

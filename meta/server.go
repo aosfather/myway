@@ -2,6 +2,7 @@ package meta
 
 import (
 	"fmt"
+	"github.com/aosfather/myway/filter"
 	"strings"
 )
 
@@ -12,6 +13,19 @@ type ApplicationMapper struct {
 	Host    string         //对应主机名称
 	Cluster *ServerCluster //集群
 	apis    []*ApiMapper
+	chains  map[string]filter.FilterChain //filter链定义
+
+}
+
+//增加filter链接
+func (this *ApplicationMapper) AddFilterChain(c filter.FilterChainDef) {
+	chain := filter.Factory(c)
+	if chain != nil && len(chain) > 0 {
+		if this.chains == nil {
+			this.chains = make(map[string]filter.FilterChain)
+		}
+		this.chains[c.Name] = chain
+	}
 }
 
 func (this *ApplicationMapper) AddMapper(api *ApiMapper) {
@@ -25,12 +39,18 @@ func (this *ApplicationMapper) GetMappers() []*ApiMapper {
 	return this.apis
 }
 
+func (this *ApplicationMapper) GetFilterChain(name string) filter.FilterChain {
+	return this.chains[name]
+}
+
 //API接口映射
 type ApiMapper struct {
 	application *ApplicationMapper
 	Url         string //api的url
 	TargetUrl   string //目标地址
 	Label       string //接口标题
+	Input       filter.FilterChain
+	Output      filter.FilterChain
 }
 
 func (this *ApiMapper) GetCluster() *ServerCluster {
