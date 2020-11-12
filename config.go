@@ -14,8 +14,9 @@ import (
 */
 
 type yamlConfig struct {
-	Config ApplicationConfigurate `yaml:"path"`
-	System SystemConfigurate      `yaml:"system"`
+	Config  ApplicationConfigurate `yaml:"path"`
+	System  SystemConfigurate      `yaml:"system"`
+	Context ContextConfigurate     `yaml:"context"`
 }
 type ApplicationConfigurate struct {
 	ServerPath    string   `yaml:"server"`
@@ -48,4 +49,16 @@ type AuthRedisConfig struct {
 	Address  string `yaml:"address"`
 	DataBase int    `yaml:"db"`
 	Expire   int64  `yaml:"expire"`
+}
+
+//上下文配置
+type ContextConfigurate struct {
+	Root  string //根目录
+	Items []Item
+}
+
+//配置项
+type Item struct {
+	File string `yaml:"file"` //文件
+	Type string `yaml:"type"` //类型
 }

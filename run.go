@@ -43,6 +43,8 @@ func (this *application) Start() {
 	//加载api定义
 	this.loadApisConfig(e.Config)
 
+	this.loadContextConfig(e.Context)
+
 	//加载插件
 	this.loadPlugins(e.Config, e.System)
 
@@ -94,6 +96,19 @@ func (this *application) eurekaToApplication(app *eureka.Application) *meta.Appl
 		cluster.AddServer(server)
 	}
 	return &mapper
+}
+
+//---------context 初始化 ----------//
+func (this *application) loadContextConfig(config ContextConfigurate) {
+	root := config.Root
+	for _, item := range config.Items {
+		f := root + "/" + item.File
+		loader := loadMap[item.Type]
+		if loader != nil {
+			loader(f)
+		}
+	}
+
 }
 
 //初始化管理控制台

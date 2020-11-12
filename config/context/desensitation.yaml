@@ -1,0 +1,4 @@
+version: 1.0.0
+name: 脱敏类型定义
+contexts:
+  - {name: phone,label: 手机号脱敏,data: {head: 3,tail: 4,padding: false,replace: false,pattern: ,mask: 42 }}

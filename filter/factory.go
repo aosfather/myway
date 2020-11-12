@@ -43,6 +43,14 @@ func buildFilter(def FilterDef) Filter {
 		filter = &ParamterRemover{Parameters: def.Parameters}
 	case "parameter_rename":
 		filter = &ParamterRename{Parameters: def.Parameters}
+	case "body_json":
+		filter = &BodyToJson{}
+	case "json_body":
+		filter = &JsonToBody{}
+	case "property_rename":
+		filter = &PropertyFilter{Parameters: def.Parameters, name: "property_rename", process: propertyRenname}
+	case "property_desensitation":
+		filter = &PropertyFilter{Parameters: def.Parameters, name: "property_desensitation", process: propertyDesensitation}
 
 	}
 	return filter
