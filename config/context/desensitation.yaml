@@ -2,3 +2,7 @@ version: 1.0.0
 name: 脱敏类型定义
 contexts:
   - {name: phone,label: 手机号脱敏,data: {head: 3,tail: 4,padding: false,replace: false,pattern: ,mask: 42 }}
+  - {name: address,label: 地址脱敏,data: {head: 0,tail: 6,padding: false,replace: true,pattern: ,mask: 42 }}
+  - {name: idcard,label: 身份证脱敏,data: {head: 6,tail: 2,padding: false,replace: false,pattern: ,mask: 42 }}
+  - {name: bankcard,label: 银行卡脱敏,data: {head: 4,tail: 4,padding: false,replace: false,pattern: ,mask: 42 }}
+  - {name: email,label: email地址脱敏,data: {head: 3,tail: 0,padding: true,replace: false,pattern: "(.*)(@.*)",mask: 42 }}
